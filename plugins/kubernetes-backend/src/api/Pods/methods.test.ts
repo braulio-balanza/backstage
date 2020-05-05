@@ -15,7 +15,7 @@
  */
 import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
 import { Pod } from './models'
-import { getAllNamespacedPods } from './methods'
+import { getAllNamespacedPods, getNamespacedPods, getNamespacedPodFromName } from './methods'
 import fse from 'fs-extra';
 import path from 'path';
 
@@ -28,7 +28,8 @@ const loadFixture = (fixture: string) => {
     );
 }
 
-const ALL_NAMESPACED_PODS_FIXTURE = loadFixture('allNamespacedPods.json');
+const POD_LIST_FIXTURE = loadFixture('podListFixture.json');
+const POD_FIXTURE = loadFixture('podFixture.json');
 const kc = new KubeConfig();
 
 beforeAll(() => {
@@ -47,12 +48,36 @@ describe('pod getting methods', () => {
         it('Fetches response and converts to pod list', async () => {
             // Mock listPodForAllNamespaces api call
             CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
-                .mockReturnValue(Promise.resolve(ALL_NAMESPACED_PODS_FIXTURE));
+                .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
 
-            const podsRaw = ALL_NAMESPACED_PODS_FIXTURE.body.items;
-            const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromReport(pod));
+            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
+            const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
             const actualResult: Pod[] = await getAllNamespacedPods(kc);
             expect(actualResult).toEqual(expectedResult);
         })
+    });
+    describe('gets pods for a namespace', () => {
+        it('fetches response and converts to pod array', async () => {
+            // Mock lisNamespacedPod api call
+            CoreV1Api.prototype.listNamespacedPod = jest.fn()
+                .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+
+            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
+            const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
+            const actualResult: Pod[] = await getNamespacedPods(kc, 'default');
+            expect(actualResult).toEqual(expectedResult);
+        });
+    });
+    describe('gets pod from name and namespace', () => {
+        it('fetches response and converts to pod', async () => {
+            // Mock lisNamespacedPod api call
+            CoreV1Api.prototype.readNamespacedPod = jest.fn()
+                .mockReturnValue(Promise.resolve(POD_FIXTURE));
+
+            const podRaw: V1Pod = POD_FIXTURE.body;
+            const expectedResult: Pod = Pod.buildFromV1Pod(podRaw);
+            const actualResult: Pod = await getNamespacedPodFromName(kc, 'default', 'dummy');
+            expect(actualResult).toEqual(expectedResult);
+        });
     });
 });

@@ -30,7 +30,7 @@ export interface PodOverview {
 
 export interface PodParams {
     name: string;
-    report: V1Pod;
+    v1Pod: V1Pod;
     metadata?: V1ObjectMeta;
     spec?: V1PodSpec;
     status?: V1PodStatus;
@@ -41,31 +41,27 @@ export class Pod {
     static build(params: PodParams): Pod {
         return new Pod(
             params.name,
-            params.report,
+            params.v1Pod,
             params.metadata,
             params.spec,
             params.status,
         );
     }
 
-    static buildFromReport(report: V1Pod): Pod {
-        const metadata = report.metadata;
-        const spec = report.spec;
-        const status = report.status;
+    static buildFromV1Pod(v1Pod: V1Pod): Pod {
+        const metadata = v1Pod.metadata;
+        const spec = v1Pod.spec;
+        const status = v1Pod.status;
         const name: string | null = metadata?.name ? metadata.name : "";
-        return Pod.build({ name, report, metadata, spec, status });
+        return Pod.build({ name, v1Pod: v1Pod, metadata, spec, status });
     }
 
     constructor(
         public name: string,
-        public report: V1Pod,
+        public v1Pod: V1Pod,
         public metadata?: V1ObjectMeta,
         public spec?: V1PodSpec,
         public status?: V1PodStatus,
     ) { };
-
-    // public getReportYAML(this: Pod): string {
-    //     return YAML.stringify(this.report);
-    // }
 
 } 
