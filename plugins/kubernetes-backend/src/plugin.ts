@@ -15,7 +15,7 @@
  */
 
 import express from 'express';
-import { testFunction } from './api/Pods/testFunction';
+import { testFunction } from './testFunction';
 export const router = express.Router();
 
 router.get('/', async (_, res) => {
