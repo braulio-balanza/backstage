@@ -38,6 +38,7 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { router as kubernetesRouter } from '@backstage/plugin-kubernetes-backend';
 
 const DEFAULT_PORT = 7000;
 const PORT = parseInt(process.env.PORT ?? '', 10) || DEFAULT_PORT;
@@ -62,6 +63,7 @@ async function main() {
   app.use(express.json());
   app.use(requestLoggingHandler());
   app.use('/inventory', await inventoryRouter({ inventory, logger }));
+  app.use('/kubernetes', kubernetesRouter);
   app.use('/scaffolder', createScaffolder());
   app.use(notFoundHandler());
   app.use(errorHandler());
@@ -72,3 +74,4 @@ async function main() {
 }
 
 main();
+
