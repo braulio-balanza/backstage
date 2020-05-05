@@ -40,44 +40,40 @@ beforeAll(() => {
         server: 'https://192.168.100.100:8443',
         skipTLSVerify: false
     };
-    kc.loadFromOptions({ clusters: [dummyCluster], contexts: [], users: [] });
+    kc.loadFromOptions({ clusters: [dummyCluster], contexts: [] });
     KubeConfig.prototype.makeApiClient = jest.fn().mockReturnValue(new CoreV1Api);
 });
 describe('pod getting methods', () => {
-    describe('gets pods from all namespaces', () => {
-        it('Fetches response and converts to pod list', async () => {
-            // Mock listPodForAllNamespaces api call
-            CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
-                .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+    // Mock listPodForAllNamespaces api call
+    CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
+        .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+    it('gets pods from all namespaces', async () => {
+        const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
+        const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
+        const actualResult: Pod[] = await getAllNamespacedPods(kc);
+        expect(actualResult).toEqual(expectedResult);
+    })
+    it('gets pods for a namespace', async () => {
+        // Mock lisNamespacedPod api call
+        CoreV1Api.prototype.listNamespacedPod = jest.fn()
+            .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
 
-            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-            const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
-            const actualResult: Pod[] = await getAllNamespacedPods(kc);
-            expect(actualResult).toEqual(expectedResult);
-        })
+        const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
+        const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
+        const actualResult: Pod[] = await getNamespacedPods(kc, 'default');
+        expect(actualResult).toEqual(expectedResult);
     });
-    describe('gets pods for a namespace', () => {
-        it('fetches response and converts to pod array', async () => {
-            // Mock lisNamespacedPod api call
-            CoreV1Api.prototype.listNamespacedPod = jest.fn()
-                .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+    it('gets pod from name and namespace', async () => {
+        // Mock lisNamespacedPod api call
+        CoreV1Api.prototype.readNamespacedPod = jest.fn()
+            .mockReturnValue(Promise.resolve(POD_FIXTURE));
 
-            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-            const expectedResult: Pod[] = podsRaw.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
-            const actualResult: Pod[] = await getNamespacedPods(kc, 'default');
-            expect(actualResult).toEqual(expectedResult);
-        });
+        const podRaw: V1Pod = POD_FIXTURE.body;
+        const expectedResult: Pod = Pod.buildFromV1Pod(podRaw);
+        const actualResult: Pod = await getNamespacedPodFromName(kc, 'default', 'dummy');
+        expect(actualResult).toEqual(expectedResult);
     });
-    describe('gets pod from name and namespace', () => {
-        it('fetches response and converts to pod', async () => {
-            // Mock lisNamespacedPod api call
-            CoreV1Api.prototype.readNamespacedPod = jest.fn()
-                .mockReturnValue(Promise.resolve(POD_FIXTURE));
+    it('returns error on timeout', async () => {
 
-            const podRaw: V1Pod = POD_FIXTURE.body;
-            const expectedResult: Pod = Pod.buildFromV1Pod(podRaw);
-            const actualResult: Pod = await getNamespacedPodFromName(kc, 'default', 'dummy');
-            expect(actualResult).toEqual(expectedResult);
-        });
     });
 });

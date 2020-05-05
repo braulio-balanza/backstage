@@ -22,11 +22,10 @@ import { Pod } from './models'
 export const getAllNamespacedPods = async (kc: KubeConfig): Promise<Pod[]> => {
     try {
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
-        const { body: { items: podResponse } } = await kc
-            .makeApiClient(CoreV1Api)
-            .listPodForAllNamespaces();
-        const pods: Pod[] = podResponse.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
+        const api = kc.makeApiClient(CoreV1Api);
+        const { body: { items } } = await api.listPodForAllNamespaces();
         isRequestTimeout();
+        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
         return pods;
     } catch (error) {
         throw error;
@@ -38,8 +37,8 @@ export const getNamespacedPods = async (kc: KubeConfig, namespace: string): Prom
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
         const { body: { items } } = await api.listNamespacedPod(namespace);
-        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
         isRequestTimeout();
+        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
         return pods;
     } catch (error) {
         throw error;
@@ -50,10 +49,11 @@ export const getNamespacedPodFromName = async (kc: KubeConfig, name: string, nam
     try {
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
-        const pod: Pod = await Pod.buildFromV1Pod((await api.readNamespacedPod(name, namespace)).body);
+        const { body } = await api.readNamespacedPod(name, namespace);
+        const pod: Pod = Pod.buildFromV1Pod(body);
         isRequestTimeout();
         return pod;
     } catch (error) {
-        throw error.message
+        throw error
     }
 }
