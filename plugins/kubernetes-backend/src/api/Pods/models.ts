@@ -28,7 +28,7 @@ export interface PodOverview {
     created: Date,
 }
 
-export interface PodParams {
+export interface IPod {
     name: string;
     v1Pod: V1Pod;
     metadata?: V1ObjectMeta;
@@ -36,9 +36,9 @@ export interface PodParams {
     status?: V1PodStatus;
 }
 
-export class Pod {
+export class Pod implements IPod {
 
-    static build(params: PodParams): Pod {
+    static build(params: IPod): Pod {
         return new Pod(
             params.name,
             params.v1Pod,
@@ -52,8 +52,15 @@ export class Pod {
         const metadata = v1Pod.metadata;
         const spec = v1Pod.spec;
         const status = v1Pod.status;
-        const name: string | null = metadata?.name ? metadata.name : "";
+        const name: string = metadata?.name ? metadata.name : "";
         return Pod.build({ name, v1Pod: v1Pod, metadata, spec, status });
+    }
+
+    static buildArrayFromV1PodArray(v1PodList: V1Pod[]): Pod[] {
+
+        const pods: Pod[] = new Array<Pod>();
+        v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1Pod(pod)));
+        return pods;
     }
 
     constructor(

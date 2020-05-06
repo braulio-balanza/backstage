@@ -17,7 +17,6 @@ import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
 import { isConfigEmpty, isRequestTimeout } from '../utils'
 import { Pod } from './models'
 
-// const wait = async (ms: number = 0): Promise<void> => new Promise(r => setTimeout(r, ms));
 
 export const getAllNamespacedPods = async (kc: KubeConfig): Promise<Pod[]> => {
     try {
@@ -32,11 +31,14 @@ export const getAllNamespacedPods = async (kc: KubeConfig): Promise<Pod[]> => {
     }
 }
 
-export const getNamespacedPods = async (kc: KubeConfig, namespace: string): Promise<Pod[]> => {
+export interface IGetNamesacedPods {
+    namespace: string;
+}
+export const getNamespacedPods = async (kc: KubeConfig, options: IGetNamesacedPods): Promise<Pod[]> => {
     try {
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
-        const { body: { items } } = await api.listNamespacedPod(namespace);
+        const { body: { items } } = await api.listNamespacedPod(options.namespace);
         isRequestTimeout();
         const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
         return pods;
@@ -45,11 +47,16 @@ export const getNamespacedPods = async (kc: KubeConfig, namespace: string): Prom
     }
 }
 
-export const getNamespacedPodFromName = async (kc: KubeConfig, name: string, namespace: string): Promise<Pod> => {
+export interface IGetNamesacedPodFromName {
+    name: string;
+    namespace: string;
+}
+
+export const getNamespacedPodFromName = async (kc: KubeConfig, options: IGetNamesacedPodFromName): Promise<Pod> => {
     try {
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
-        const { body } = await api.readNamespacedPod(name, namespace);
+        const { body } = await api.readNamespacedPod(options.name, options.namespace);
         const pod: Pod = Pod.buildFromV1Pod(body);
         isRequestTimeout();
         return pod;
