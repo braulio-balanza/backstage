@@ -30,7 +30,8 @@ export interface PodOverview {
 
 export interface IPod {
     name: string;
-    v1Pod: V1Pod;
+    kind?: string,
+    apiVersion?: string,
     metadata?: V1ObjectMeta;
     spec?: V1PodSpec;
     status?: V1PodStatus;
@@ -41,7 +42,8 @@ export class Pod implements IPod {
     static build(params: IPod): Pod {
         return new Pod(
             params.name,
-            params.v1Pod,
+            params.kind,
+            params.apiVersion,
             params.metadata,
             params.spec,
             params.status,
@@ -49,23 +51,33 @@ export class Pod implements IPod {
     }
 
     static buildFromV1Pod(v1Pod: V1Pod): Pod {
-        const metadata = v1Pod.metadata;
-        const spec = v1Pod.spec;
-        const status = v1Pod.status;
+        const { kind, apiVersion, metadata, spec, status } = v1Pod;
         const name: string = metadata?.name ? metadata.name : "";
-        return Pod.build({ name, v1Pod: v1Pod, metadata, spec, status });
+        return Pod.build({ name, kind, apiVersion, metadata, spec, status });
     }
 
     static buildArrayFromV1PodArray(v1PodList: V1Pod[]): Pod[] {
-
         const pods: Pod[] = new Array<Pod>();
         v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1Pod(pod)));
         return pods;
     }
+    /**
+     * name
+     */
+    public buildV1Pod(): V1Pod {
+        return {
+            kind: this.kind,
+            apiVersion: this.apiVersion,
+            metadata: this.metadata,
+            spec: this.spec,
+            status: this.status,
+        };
+    }
 
     constructor(
         public name: string,
-        public v1Pod: V1Pod,
+        public kind?: string,
+        public apiVersion?: string,
         public metadata?: V1ObjectMeta,
         public spec?: V1PodSpec,
         public status?: V1PodStatus,

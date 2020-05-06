@@ -11,13 +11,13 @@
     "clean": "backstage-cli clean"
   },
   "devDependencies": {
-    "@backstage/cli": "^0.1.1-alpha.4",
-    "fs-extra": "^9.0.0",
-    "path": "^0.12.7"
+    "@backstage/cli": "^0.1.1-alpha.4"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.11.2",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "fs-extra": "^9.0.0",
+    "path": "^0.12.7"
   },
   "files": [
     "dist"

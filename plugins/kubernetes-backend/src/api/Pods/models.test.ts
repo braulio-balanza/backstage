@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { loadFixture } from '../testUtils'
+import { Pod } from './models'
+import { V1Pod } from '@kubernetes/client-node'
 
+const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
 
 describe(`tests model's methods work properly`, () => {
-    it('dummy', () => expect(true).toBeTruthy())
+    it(" builds pod from V1Pod", () => {
+        expect(Pod.buildFromV1Pod(v1Pod)).toBeInstanceOf(Pod);
+    })
 })
