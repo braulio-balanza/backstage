@@ -15,7 +15,7 @@
  */
 import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
 import { Pod } from './models'
-import { getAllNamespacedPods, getNamespacedPods, getNamespacedPodFromName } from './methods'
+import { getAllNamespacedPods, getNamespacedPods, getNamespacedPod } from './methods'
 import { loadFixture } from '../testUtils'
 
 const POD_LIST_FIXTURE = loadFixture('Pods', 'podListResponseFixture.json');
@@ -34,9 +34,19 @@ beforeAll(() => {
     KubeConfig.prototype.makeApiClient = jest.fn().mockReturnValue(new CoreV1Api);
 });
 describe('pod getting methods', () => {
-    // Mock listPodForAllNamespaces api call
-    CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
-        .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+    beforeAll(() => {
+        // Mock listPodForAllNamespaces api call
+        CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
+            .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+        // Mock listNamespacedPods api call
+        CoreV1Api.prototype.listNamespacedPod = jest.fn()
+            .mockReturnValueOnce(Promise.resolve(POD_LIST_FIXTURE));
+        // Mock readNamespacedPod api call
+        CoreV1Api.prototype.readNamespacedPod = jest.fn()
+            .mockReturnValue(Promise.resolve(POD_FIXTURE));
+
+    });
+
     it('gets pods from all namespaces', async () => {
 
         const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
@@ -45,9 +55,6 @@ describe('pod getting methods', () => {
         expect(actualResult).toEqual(expectedResult);
     })
     it('gets pods for a namespace', async () => {
-        // Mock lisNamespacedPod api call
-        CoreV1Api.prototype.listNamespacedPod = jest.fn()
-            .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
 
         const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
         const expectedResult: Pod[] = Pod.buildArrayFromV1PodArray(podsRaw);
@@ -55,29 +62,27 @@ describe('pod getting methods', () => {
         expect(actualResult).toEqual(expectedResult);
     });
     it('gets pod from name and namespace', async () => {
-        // Mock lisNamespacedPod api call
-        CoreV1Api.prototype.readNamespacedPod = jest.fn()
-            .mockReturnValue(Promise.resolve(POD_FIXTURE));
+
 
         const podRaw: V1Pod = POD_FIXTURE.body;
         const expectedResult: Pod = Pod.buildFromV1Pod(podRaw);
-        const actualResult: Pod = await getNamespacedPodFromName(kc, { namespace: 'default', name: 'dummy' });
+        const actualResult: Pod = await getNamespacedPod(kc, { namespace: 'default', name: 'dummy' });
         expect(actualResult).toEqual(expectedResult);
     });
     it('returns error on empty kubeconfig file', async () => {
-        const emptyKubeConfigFile: KubeConfig = new KubeConfig();
-        const kubeConfigOptions = { clusters: [], users: [], contexts: [] }
-        const kubeConfigWithNoValues: KubeConfig = new KubeConfig();
-        kubeConfigWithNoValues.loadFromOptions(kubeConfigOptions)
+        const configs: [KubeConfig, KubeConfig] = [new KubeConfig(), new KubeConfig()];
+        configs[1].loadFromOptions({ clusters: [], users: [], contexts: [] });
 
-        await expect(getAllNamespacedPods(emptyKubeConfigFile))
-            .rejects
-            .toThrowError('Kubernetes configuration file was empty!')
-        await expect(getNamespacedPods(emptyKubeConfigFile, { namespace: 'dummy' }))
-            .rejects
-            .toThrowError('Kubernetes configuration file was empty!')
-        await expect(getNamespacedPodFromName(emptyKubeConfigFile, { namespace: 'dummy', name: 'dummy' }))
-            .rejects
-            .toThrowError('Kubernetes configuration file was empty!')
+        configs.forEach(async (config: KubeConfig) => {
+            await expect(getAllNamespacedPods(config))
+                .rejects
+                .toThrowError('Kubernetes configuration file was empty!')
+            await expect(getNamespacedPods(config, { namespace: 'dummy' }))
+                .rejects
+                .toThrowError('Kubernetes configuration file was empty!')
+            await expect(getNamespacedPod(config, { namespace: 'dummy', name: 'dummy' }))
+                .rejects
+                .toThrowError('Kubernetes configuration file was empty!')
+        });
     });
 });

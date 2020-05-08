@@ -18,7 +18,7 @@ import { Router, Request, Response } from 'express'
 import {
     getAllNamespacedPods,
     getNamespacedPods,
-    getNamespacedPodFromName,
+    getNamespacedPod,
     IGetNamesacedPods,
     IGetNamesacedPodFromName,
 } from './methods'
@@ -48,11 +48,11 @@ export const bindRoutes = (router: Router): void => {
             res.json(pods);
         });
 
-    router.get('/v1/getNamespacedPodFromName/:podOptions', async (req: Request, res: Response<Pod>) => {
+    router.get('/v1/getNamespacedPod/:podOptions', async (req: Request, res: Response<Pod>) => {
         const kc: KubeConfig = new KubeConfig();
         kc.loadFromDefault();
         const options: IGetNamesacedPodFromName = JSON.parse(req.params.podOptions);
-        const pod: Pod = await getNamespacedPodFromName(kc, options);
+        const pod: Pod = await getNamespacedPod(kc, options);
         res.json(pod);
     })
 

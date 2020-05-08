@@ -13,29 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// declare module '@kubernetes/client-node' {
-
-//     export interface ClusterResponse {
-//         readonly name: string;
-//         readonly server: string;
-//         readonly skipTLSVerify: boolean;
-//         readonly caData?: string;
-//         readonly caFile?: string;
-//     }
-
-//     export interface PodResponse {
-
-//     }
-
-//     export class CoreV1Api { }
-
-//     type ApiType = {};
-
-//     type ApiConstructor<T extends ApiType> = new (server: string) => T;
-
-//     export class KubeConfig {
-//         loadFromDefault(): void;
-//         makeApiClient<T extends ApiType>(api: ApiConstructor<T>): ApiConstructor<T>;
-//         getClusters(): ClusterResponse[];
-//     }
-// }
+// TODO: Implement types

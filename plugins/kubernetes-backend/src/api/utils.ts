@@ -15,8 +15,3 @@
  */
 import { KubeConfig } from '@kubernetes/client-node'
 export const isConfigEmpty = (kc: KubeConfig) => (kc.contexts?.length || kc.clusters?.length || kc.users?.length) ? false : true;
-export const isRequestTimeout = (ms = 6000): Promise<void> => new Promise(
-    (_, reject) =>
-        setTimeout((): void =>
-            reject(new Error('Request timed out.')), ms)
-);

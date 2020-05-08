@@ -16,9 +16,7 @@
 
 import express from 'express';
 import { bindRoutes as bindPodRoutes } from './api/Pods'
-import bodyParser from 'body-parser';
 export const router = express.Router();
-router.use(bodyParser.json());
 router.get('/', async (_, res) => {
   res
     .status(200)

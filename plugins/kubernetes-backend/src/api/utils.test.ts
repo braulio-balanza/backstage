@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { KubeConfig } from '@kubernetes/client-node';
-import { isConfigEmpty, isRequestTimeout } from './utils'
+import { isConfigEmpty } from './utils'
 
 describe('Util functions general testing', () => {
     describe('isConfigEmpty works properly', () => {
@@ -25,11 +25,4 @@ describe('Util functions general testing', () => {
             expect(isConfigEmpty(emptyKubeConfigFile) && isConfigEmpty(kubeConfigWithNoValues)).toBe(true)
         });
     });
-    describe('isRequestTimeout work properly', () => {
-        it('throws error if requests times out', async () => {
-            await expect(isRequestTimeout(0))
-                .rejects
-                .toThrowError('Request timed out.');
-        }, 100)
-    })
 })

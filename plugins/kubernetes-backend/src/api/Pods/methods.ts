@@ -50,7 +50,7 @@ export interface IGetNamesacedPodFromName {
     namespace: string;
 }
 
-export const getNamespacedPodFromName = async (kc: KubeConfig, options: IGetNamesacedPodFromName): Promise<Pod> => {
+export const getNamespacedPod = async (kc: KubeConfig, options: IGetNamesacedPodFromName): Promise<Pod> => {
     try {
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
