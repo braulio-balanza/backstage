@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
-import { isConfigEmpty, isRequestTimeout } from '../utils'
+import { isConfigEmpty } from '../utils'
 import { Pod } from './models'
 
 
@@ -23,7 +23,6 @@ export const getAllNamespacedPods = async (kc: KubeConfig): Promise<Pod[]> => {
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
         const { body: { items } } = await api.listPodForAllNamespaces();
-        isRequestTimeout();
         const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
         return pods;
     } catch (error) {
@@ -39,7 +38,6 @@ export const getNamespacedPods = async (kc: KubeConfig, options: IGetNamesacedPo
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
         const { body: { items } } = await api.listNamespacedPod(options.namespace);
-        isRequestTimeout();
         const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
         return pods;
     } catch (error) {
@@ -58,7 +56,6 @@ export const getNamespacedPodFromName = async (kc: KubeConfig, options: IGetName
         const api = kc.makeApiClient(CoreV1Api);
         const { body } = await api.readNamespacedPod(options.name, options.namespace);
         const pod: Pod = Pod.buildFromV1Pod(body);
-        isRequestTimeout();
         return pod;
     } catch (error) {
         throw error

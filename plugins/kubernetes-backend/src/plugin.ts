@@ -15,11 +15,11 @@
  */
 
 import express from 'express';
-import { testFunction } from './testFunction';
+import { bindRoutes as bindPodRoutes } from './api/Pods'
+import bodyParser from 'body-parser';
 export const router = express.Router();
-
+router.use(bodyParser.json());
 router.get('/', async (_, res) => {
-  const testValue = await testFunction();
   res
     .status(200)
     .send([
@@ -27,6 +27,6 @@ router.get('/', async (_, res) => {
       { id: 'component2' },
       { id: 'component3' },
       { id: 'component4' },
-      testValue,
     ]);
 });
+bindPodRoutes(router);

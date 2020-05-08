@@ -13,3 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import { Router, Request, Response } from 'express'
+import {
+    getAllNamespacedPods,
+    getNamespacedPods,
+    getNamespacedPodFromName,
+    IGetNamesacedPods,
+    IGetNamesacedPodFromName,
+} from './methods'
+import { Pod } from './models'
+import { KubeConfig } from '@kubernetes/client-node';
+
+export const bindRoutes = (router: Router): void => {
+
+    router.get('/v1/getAllNamespacedPods',
+        async (
+            _: Request,
+            res: Response<Pod[]>) => {
+            const kc: KubeConfig = new KubeConfig();
+            kc.loadFromDefault();
+            const pods: Pod[] = await getAllNamespacedPods(kc);
+            res.json(pods);
+        });
+
+    router.get('/v1/getNamespacedPods/:podOptions',
+        async (
+            req: Request,
+            res: Response) => {
+            const kc: KubeConfig = new KubeConfig();
+            kc.loadFromDefault();
+            const options: IGetNamesacedPods = JSON.parse(req.params.podOptions);
+            const pods: Pod[] = await getNamespacedPods(kc, options);
+            res.json(pods);
+        });
+
+    router.get('/v1/getNamespacedPodFromName/:podOptions', async (req: Request, res: Response<Pod>) => {
+        const kc: KubeConfig = new KubeConfig();
+        kc.loadFromDefault();
+        const options: IGetNamesacedPodFromName = JSON.parse(req.params.podOptions);
+        const pod: Pod = await getNamespacedPodFromName(kc, options);
+        res.json(pod);
+    })
+
+}

@@ -18,9 +18,35 @@ import { Pod } from './models'
 import { V1Pod } from '@kubernetes/client-node'
 
 const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
-
 describe(`tests model's methods work properly`, () => {
-    it(" builds pod from V1Pod", () => {
-        expect(Pod.buildFromV1Pod(v1Pod)).toBeInstanceOf(Pod);
+    describe(`builds pod`, () => {
+        it(" builds pod from V1Pod", () => {
+            const testPod: Pod = Pod.buildFromV1Pod(v1Pod);
+            expect(typeof testPod.name).toEqual("string");
+            expect(typeof testPod.kind).toEqual("string");
+            expect(typeof testPod.apiVersion).toEqual("string");
+            expect(testPod.metadata).toBeInstanceOf(Object);
+            expect(testPod.spec).toBeInstanceOf(Object);
+            expect(testPod.status).toBeInstanceOf(Object);
+        });
+        it("Allows for null vallues", () => {
+            const testPod: Pod = Pod.build({ name: "foo" });
+            expect(testPod.name).toMatchInlineSnapshot(`"foo"`);
+            expect(testPod.kind).toBeUndefined();
+            expect(testPod.apiVersion).toBeUndefined();
+            expect(testPod.metadata).toBeUndefined();
+            expect(testPod.spec).toBeUndefined();
+            expect(testPod.status).toBeUndefined();
+        })
+    });
+
+    it("builds V1Pod from Pod", () => {
+        const testPod: Pod = Pod.buildFromV1Pod(v1Pod);
+        expect(testPod.buildV1Pod()).toEqual(v1Pod);
+    })
+    it(" Builds Pod from V1Pod with no name ", () => {
+        const noNameV1Pod = v1Pod;
+        if (noNameV1Pod.metadata) noNameV1Pod.metadata.name = undefined;
+        expect(Pod.buildFromV1Pod(noNameV1Pod).name).toEqual("");
     })
 })

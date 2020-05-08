@@ -61,9 +61,6 @@ export class Pod implements IPod {
         v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1Pod(pod)));
         return pods;
     }
-    /**
-     * name
-     */
     public buildV1Pod(): V1Pod {
         return {
             kind: this.kind,
