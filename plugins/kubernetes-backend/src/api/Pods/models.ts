@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { V1Pod, V1ObjectMeta, V1PodSpec, V1PodStatus } from "@kubernetes/client-node";
+import { V1Pod, V1PodSpec, V1PodStatus, V1ObjectMeta } from "@kubernetes/client-node";
+import { IK8sObject, K8sObject } from "../K8sObject/models"
 // import YAML from 'yaml';
 
 export interface PodOverview {
@@ -28,23 +29,24 @@ export interface PodOverview {
     created: Date,
 }
 
-export interface IPod {
+
+export interface IPod extends IK8sObject {
     name: string;
-    kind?: string,
-    apiVersion?: string,
+    kind?: string;
+    apiVersion?: string;
     metadata?: V1ObjectMeta;
     spec?: V1PodSpec;
     status?: V1PodStatus;
 }
 
-export class Pod implements IPod {
+export class Pod extends K8sObject {
 
     static build(params: IPod): Pod {
         return new Pod(
             params.name,
             params.kind,
             params.apiVersion,
-            params.metadata,
+            params.metadata as V1ObjectMeta,
             params.spec,
             params.status,
         );
@@ -56,18 +58,19 @@ export class Pod implements IPod {
         return Pod.build({ name, kind, apiVersion, metadata, spec, status });
     }
 
-    static buildArrayFromV1PodArray(v1PodList: V1Pod[]): Pod[] {
+    static buildFromV1PodArray(v1PodList: V1Pod[]): Pod[] {
         const pods: Pod[] = new Array<Pod>();
         v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1Pod(pod)));
         return pods;
     }
+
     public buildV1Pod(): V1Pod {
         return {
             kind: this.kind,
             apiVersion: this.apiVersion,
             metadata: this.metadata,
-            spec: this.spec,
-            status: this.status,
+            spec: this.spec as V1PodSpec,
+            status: this.status as V1PodStatus,
         };
     }
 
@@ -75,9 +78,11 @@ export class Pod implements IPod {
         public name: string,
         public kind?: string,
         public apiVersion?: string,
-        public metadata?: V1ObjectMeta,
-        public spec?: V1PodSpec,
-        public status?: V1PodStatus,
-    ) { };
+        metadata?: V1ObjectMeta,
+        spec?: V1PodSpec,
+        status?: V1PodStatus,
+    ) {
+        super(metadata, spec, status)
+    };
 
 } 

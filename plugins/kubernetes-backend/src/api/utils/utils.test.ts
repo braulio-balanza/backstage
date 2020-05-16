@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { KubeConfig } from '@kubernetes/client-node';
-import { isConfigEmpty } from './utils'
+import { Labels } from '../K8sObject/models'
+import { isConfigEmpty, stringifyLabels, returnUndefinedArray } from './utils'
 
 describe('Util functions general testing', () => {
     describe('isConfigEmpty works properly', () => {
@@ -25,4 +26,20 @@ describe('Util functions general testing', () => {
             expect(isConfigEmpty(emptyKubeConfigFile) && isConfigEmpty(kubeConfigWithNoValues)).toBe(true)
         });
     });
+    describe('tests stringifyLabels', () => {
+        const exampleLabelString = 'app=nginx,test=new-test';
+        const exampleLabels: Labels = { "app": "nginx", "test": "new-test" };
+        it('returns labels in the correct format', () => {
+            expect(stringifyLabels(exampleLabels)).toEqual(exampleLabelString);
+        })
+        it('returns empty string if empty label array', () => {
+            expect(stringifyLabels({})).toEqual('');
+        })
+    });
+    describe('tests fillUndefinedParams', () => {
+        const undefinedArray: undefined[] = new Array<undefined>(4);
+        it('returns an array with the correct number of undefined', () => {
+            expect(returnUndefinedArray(4)).toEqual(undefinedArray);
+        })
+    })
 })

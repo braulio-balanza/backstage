@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { loadFixture } from '../testUtils'
+import { loadFixture } from '../utils/testUtils'
 import { Pod } from './models'
 import { V1Pod } from '@kubernetes/client-node'
+import { Labels } from 'api/K8sObject/models';
 
 const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
+
 describe(`tests model's methods work properly`, () => {
     describe(`builds pod`, () => {
         it(" builds pod from V1Pod", () => {
@@ -48,5 +50,12 @@ describe(`tests model's methods work properly`, () => {
         const noNameV1Pod = v1Pod;
         if (noNameV1Pod.metadata) noNameV1Pod.metadata.name = undefined;
         expect(Pod.buildFromV1Pod(noNameV1Pod).name).toEqual("");
+    })
+    describe('tests K8sObject methods', () => {
+        it('gets pod labels', () => {
+            const podLabels: Labels = { "app": "hello-node", "pod-template-hash": "57c6f5dbf6" };
+            const testPod: Pod = Pod.buildFromV1Pod(v1Pod);
+            expect(testPod.getLabels()).toEqual(podLabels);
+        })
     })
 })

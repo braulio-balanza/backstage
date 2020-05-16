@@ -14,4 +14,17 @@
  * limitations under the License.
  */
 import { KubeConfig } from '@kubernetes/client-node'
-export const isConfigEmpty = (kc: KubeConfig) => (kc.contexts?.length || kc.clusters?.length || kc.users?.length) ? false : true;
+import { Labels } from '../K8sObject/models'
+
+export const isConfigEmpty = (kc: KubeConfig) =>
+    (kc.contexts?.length || kc.clusters?.length || kc.users?.length) ? false : true;
+
+export const returnUndefinedArray = (num: number): undefined[] => new Array<undefined>(num)
+
+export const stringifyLabels = (labels: undefined | Labels): string => {
+    let labelString: string = '';
+    if (labels)
+        for (const [key, value] of Object.entries(labels))
+            labelString = labelString.concat(`${key}=${value},`);
+    return labelString.slice(0, -1);
+};

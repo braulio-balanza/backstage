@@ -13,14 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fse from 'fs-extra';
-import path from 'path';
 
-export const wait = async (ms: number = 0): Promise<void> => new Promise(r => setTimeout(r, ms));
-export const loadFixture = (apiSubDirectory: string, fixture: string) => {
-    return JSON.parse(
-        fse.readFileSync(
-            path.join(__dirname, apiSubDirectory, '__fixtures__', fixture)
-        ).toString('utf-8')
-    );
-}

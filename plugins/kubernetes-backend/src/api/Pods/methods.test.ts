@@ -16,7 +16,7 @@
 import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
 import { Pod } from './models'
 import { getAllNamespacedPods, getNamespacedPods, getNamespacedPod } from './methods'
-import { loadFixture } from '../testUtils'
+import { loadFixture } from '../utils/testUtils'
 
 const POD_LIST_FIXTURE = loadFixture('Pods', 'podListResponseFixture.json');
 const POD_FIXTURE = loadFixture('Pods', 'podResponseFixture.json');
@@ -50,14 +50,14 @@ describe('pod getting methods', () => {
     it('gets pods from all namespaces', async () => {
 
         const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-        const expectedResult: Pod[] = Pod.buildArrayFromV1PodArray(podsRaw);
+        const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
         const actualResult: Pod[] = await getAllNamespacedPods(kc);
         expect(actualResult).toEqual(expectedResult);
     })
     it('gets pods for a namespace', async () => {
 
         const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-        const expectedResult: Pod[] = Pod.buildArrayFromV1PodArray(podsRaw);
+        const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
         const actualResult: Pod[] = await getNamespacedPods(kc, { namespace: 'default' });
         expect(actualResult).toEqual(expectedResult);
     });

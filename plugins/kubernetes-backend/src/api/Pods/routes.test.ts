@@ -20,7 +20,7 @@ import { KubeConfig } from '@kubernetes/client-node'
 import bodyParser from 'body-parser';
 import request from 'supertest';
 import { bindRoutes } from "./routes";
-import { loadFixture } from '../testUtils'
+import { loadFixture } from '../utils/testUtils'
 import { Pod } from "./models";
 
 jest.mock('./methods');
@@ -47,7 +47,7 @@ describe('pod routes', () => {
     describe("GET /v1/getAllNamespacedPods", () => {
         beforeEach(() => {
             methods.getAllNamespacedPods.mockResolvedValueOnce(
-                Pod.buildArrayFromV1PodArray(POD_LIST_FIXTURE)
+                Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
             )
         });
         afterEach(() => {
@@ -72,7 +72,7 @@ describe('pod routes', () => {
     describe('GET /v1/getNamespacedPods', () => {
         beforeEach(() => {
             methods.getNamespacedPods.mockResolvedValueOnce(
-                Pod.buildArrayFromV1PodArray(POD_LIST_FIXTURE)
+                Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
             );
         });
         afterEach(() => {
