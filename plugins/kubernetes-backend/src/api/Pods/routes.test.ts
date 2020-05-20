@@ -40,86 +40,89 @@ describe('pod routes', () => {
         app = express();
         app.use(bodyParser.json());
         const router = expressPromiseRouter();
-        bindRoutes(router);
+        bindRoutes(router, dummyKubeConfig);
         app.use(router);
     });
 
-    describe("GET /v1/getAllNamespacedPods", () => {
-        beforeEach(() => {
-            methods.getAllNamespacedPods.mockResolvedValueOnce(
-                Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
-            )
-        });
-        afterEach(() => {
-            methods.getAllNamespacedPods.mockReset();
-        });
-        it('returns the correct payload', async () => {
-            await request(app)
-                .get('/v1/getAllNamespacedPods')
-                .set('Accept', 'application/json')
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .then(res => {
-                    expect(methods.getAllNamespacedPods).toHaveBeenCalledWith(dummyKubeConfig);
-                    expect(res.body).toBeInstanceOf(Array);
-                    expect(res.body.length).toBe(10);
-                    res.body.forEach((element: any) => {
-                        expect(element).toBeInstanceOf(Object);
-                    });
-                })
-        });
-    });
-    describe('GET /v1/getNamespacedPods', () => {
-        beforeEach(() => {
-            methods.getNamespacedPods.mockResolvedValueOnce(
-                Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
-            );
-        });
-        afterEach(() => {
-            methods.getNamespacedPods.mockReset();
-        });
+    describe('On empty KubeConfig file', () => {
 
-        it("returns the correct payload", async () => {
-            await request(app)
-                .get('/v1/getNamespacedPods/{"namespace":"default"}')
-                .set('Accept', 'application/json')
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .then(res => {
-                    expect(methods.getNamespacedPods).toHaveBeenCalledWith(dummyKubeConfig, { namespace: 'default' })
-                    expect(res.body).toBeInstanceOf(Array);
-                    expect(res.body.length).toBe(10);
-                    res.body.forEach((element: any) => {
-                        expect(element).toBeInstanceOf(Object);
-                    });
-
-                });
-        });
-    });
-    describe('GET /v1/getNamespacedPodFromName', () => {
-        beforeEach(() => {
-            methods.getNamespacedPod.mockResolvedValueOnce(
-                Pod.buildFromV1PodJSON(POD_FIXTURE)
-            );
-        });
-        afterEach(() => {
-            methods.getNamespacedPod.mockReset();
-        });
-        it('returns the correct payload', async () => {
-            await request(app)
-                .get('/v1/getNamespacedPod/{"name":"hello-node-57c6f5dbf6-v2txn","namespace":"default"}')
-                .set('Accept', 'application/json')
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .then(res => {
-                    expect(methods.getNamespacedPod).toHaveBeenCalledWith(
-                        dummyKubeConfig, {
-                        name: 'hello-node-57c6f5dbf6-v2txn',
-                        namespace: 'default'
+        describe("GET /v1/getAllNamespacedPods", () => {
+            beforeEach(() => {
+                methods.getAllNamespacedPods.mockResolvedValueOnce(
+                    Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
+                )
+            });
+            afterEach(() => {
+                methods.getAllNamespacedPods.mockReset();
+            });
+            it('returns the correct payload', async () => {
+                await request(app)
+                    .get('/v1/getAllNamespacedPods')
+                    .set('Accept', 'application/json')
+                    .expect('Content-Type', /json/)
+                    .expect(200)
+                    .then(res => {
+                        expect(methods.getAllNamespacedPods).toHaveBeenCalledWith(dummyKubeConfig);
+                        expect(res.body).toBeInstanceOf(Array);
+                        expect(res.body.length).toBe(10);
+                        res.body.forEach((element: any) => {
+                            expect(element).toBeInstanceOf(Object);
+                        });
                     })
-                    expect(res.body).toBeInstanceOf(Object);
-                    expect(res.body.name).toBe("hello-node-57c6f5dbf6-v2txn")
-                });
+            });
         });
-    });
-})
+        describe('GET /v1/getNamespacedPods', () => {
+            beforeEach(() => {
+                methods.getNamespacedPods.mockResolvedValueOnce(
+                    Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
+                );
+            });
+            afterEach(() => {
+                methods.getNamespacedPods.mockReset();
+            });
+
+            it("returns the correct payload", async () => {
+                await request(app)
+                    .get('/v1/getNamespacedPods/{"namespace":"default"}')
+                    .set('Accept', 'application/json')
+                    .expect('Content-Type', /json/)
+                    .expect(200)
+                    .then(res => {
+                        expect(methods.getNamespacedPods).toHaveBeenCalledWith(dummyKubeConfig, { namespace: 'default' })
+                        expect(res.body).toBeInstanceOf(Array);
+                        expect(res.body.length).toBe(10);
+                        res.body.forEach((element: any) => {
+                            expect(element).toBeInstanceOf(Object);
+                        });
+
+                    });
+            });
+        });
+        describe('GET /v1/getNamespacedPodFromName', () => {
+            beforeEach(() => {
+                methods.getNamespacedPod.mockResolvedValueOnce(
+                    Pod.buildFromV1PodJSON(POD_FIXTURE)
+                );
+            });
+            afterEach(() => {
+                methods.getNamespacedPod.mockReset();
+            });
+            it('returns the correct payload', async () => {
+                await request(app)
+                    .get('/v1/getNamespacedPod/{"name":"hello-node-57c6f5dbf6-v2txn","namespace":"default"}')
+                    .set('Accept', 'application/json')
+                    .expect('Content-Type', /json/)
+                    .expect(200)
+                    .then(res => {
+                        expect(methods.getNamespacedPod).toHaveBeenCalledWith(
+                            dummyKubeConfig, {
+                            name: 'hello-node-57c6f5dbf6-v2txn',
+                            namespace: 'default'
+                        })
+                        expect(res.body).toBeInstanceOf(Object);
+                        expect(res.body.name).toBe("hello-node-57c6f5dbf6-v2txn")
+                    });
+            });
+        });
+    })
+});

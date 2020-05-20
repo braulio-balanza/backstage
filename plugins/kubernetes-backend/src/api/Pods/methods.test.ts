@@ -70,22 +70,7 @@ describe('tests pod model', () => {
             const actualResult: Pod = await getNamespacedPod(kc, { namespace: 'default', name: 'dummy' });
             expect(actualResult).toEqual(expectedResult);
         });
-        it('returns error on empty kubeconfig file', async () => {
-            const configs: [KubeConfig, KubeConfig] = [new KubeConfig(), new KubeConfig()];
-            configs[1].loadFromOptions({ clusters: [], users: [], contexts: [] });
 
-            configs.forEach(async (config: KubeConfig) => {
-                await expect(getAllNamespacedPods(config))
-                    .rejects
-                    .toThrowError('Kubernetes configuration file was empty!')
-                await expect(getNamespacedPods(config, { namespace: 'dummy' }))
-                    .rejects
-                    .toThrowError('Kubernetes configuration file was empty!')
-                await expect(getNamespacedPod(config, { namespace: 'dummy', name: 'dummy' }))
-                    .rejects
-                    .toThrowError('Kubernetes configuration file was empty!')
-            });
-        });
     });
 
 })

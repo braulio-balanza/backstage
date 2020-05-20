@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import express from 'express';
-import { bindRoutes } from './binder/index'
-export const router = express.Router();
-router.get('/', async (_, res) => {
-  res
-    .status(200)
-    .send([
-      { id: 'component1' },
-      { id: 'component2' },
-      { id: 'component3' },
-      { id: 'component4' },
-    ]);
-});
-bindRoutes(router);
+import { isConfigEmpty } from '../api/utils/utils';
+import { Router } from 'express';
+import { KubeConfig } from '@kubernetes/client-node';
+import { bindRoutes as bindPodRoutes } from '../api/Pods/routes';
+
+export const bindRoutes = async (router: Router) => {
+
+    const kc: KubeConfig = new KubeConfig();
+    kc.loadFromDefault();
+    if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
+    bindPodRoutes(router, kc);
+}
