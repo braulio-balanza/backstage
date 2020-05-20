@@ -24,13 +24,12 @@ import {
 } from './methods'
 import { Pod } from './models'
 import { KubeConfig } from '@kubernetes/client-node';
-
 export const bindRoutes = (router: Router): void => {
+    const kc: KubeConfig = new KubeConfig();
 
+    kc.loadFromDefault();
     router.get('/v1/getAllNamespacedPods', async (_: Request, res: Response<Pod[]>) => {
         try {
-            const kc: KubeConfig = new KubeConfig();
-            kc.loadFromDefault();
             const pods: Pod[] = await getAllNamespacedPods(kc);
             res.status(200).json(pods);
         } catch (e) {
@@ -40,8 +39,6 @@ export const bindRoutes = (router: Router): void => {
 
     router.get('/v1/getNamespacedPods/:podOptions', async (req: Request, res: Response) => {
         try {
-            const kc: KubeConfig = new KubeConfig();
-            kc.loadFromDefault();
             const options: IGetNamesacedPods = JSON.parse(req.params.podOptions);
             const pods: Pod[] = await getNamespacedPods(kc, options);
             res.status(200).json(pods);
@@ -52,7 +49,6 @@ export const bindRoutes = (router: Router): void => {
 
     router.get('/v1/getNamespacedPod/:podOptions', async (req: Request, res: Response<Pod>) => {
         try {
-            const kc: KubeConfig = new KubeConfig();
             kc.loadFromDefault();
             const options: IGetNamesacedPodFromName = JSON.parse(req.params.podOptions);
             const pod: Pod = await getNamespacedPod(kc, options);

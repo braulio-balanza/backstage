@@ -27,7 +27,7 @@ export const getAllNamespacedPods = async (kc: KubeConfig, options?: IGetAllName
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
         const { body: { items } } = await api.listPodForAllNamespaces(...returnUndefinedArray(3), stringifyLabels(options?.labels));
-        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
+        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
         return pods;
     } catch (error) {
         throw error;
@@ -49,7 +49,7 @@ export const getNamespacedPods = async (kc: KubeConfig, options: IGetNamesacedPo
             undefined,
             undefined,
             stringifyLabels(options.labels));
-        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1Pod(pod));
+        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
         return pods;
     } catch (error) {
         throw error;
@@ -66,7 +66,7 @@ export const getNamespacedPod = async (kc: KubeConfig, options: IGetNamesacedPod
         if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
         const api = kc.makeApiClient(CoreV1Api);
         const { body } = await api.readNamespacedPod(options.name, options.namespace);
-        const pod: Pod = Pod.buildFromV1Pod(body);
+        const pod: Pod = Pod.buildFromV1PodJSON(body);
         return pod;
     } catch (error) {
         throw error

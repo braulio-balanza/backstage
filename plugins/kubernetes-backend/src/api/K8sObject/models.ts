@@ -15,7 +15,7 @@
  */
 
 import * as k8s from '@kubernetes/client-node'
-import { V1ObjectMeta } from '@kubernetes/client-node';
+import * as io from 'io-ts'
 
 
 export type Labels = { [key: string]: string };
@@ -23,6 +23,45 @@ export type Labels = { [key: string]: string };
 export type K8sSpec = k8s.V1PodSpec | k8s.V1NodeSpec | k8s.V1DeploymentSpec | k8s.V1ServiceSpec | k8s.V1NamespaceSpec;
 
 export type K8sStatus = k8s.V1PodStatus | k8s.V1NodeStatus | k8s.V1DeploymentStatus | k8s.V1ServiceStatus | k8s.V1NamespaceStatus;
+
+export type meta = k8s.V1ObjectMeta | k8s.V1ListMeta;
+
+interface TypeMap {
+    name: string;
+    baseName: string;
+    type: string;
+}
+export const getKeysOfTypeMap = (input: TypeMap[]): Array<string> => {
+    const keys = Array<string>();
+    input.forEach(typeMap => {
+        keys.push(typeMap.name);
+    });
+    return keys;
+}
+
+export const V1ObjectMeta = new io.Type<
+    k8s.V1ObjectMeta,
+    string,
+    unknown
+>(
+    'V1ObjectMeta',
+    (unknown: unknown): unknown is k8s.V1ObjectMeta => {
+        if (!(unknown instanceof Object))
+            return false;
+        return Object.keys(unknown).every(key => getKeysOfTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap()).includes(key))
+    },
+    (input: unknown, context: io.Context) => {
+        if (!(input instanceof Object))
+            return io.failure(input, context);
+        return Object.keys(input).every(key => getKeysOfTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap()).includes(key))
+            ? io.success(Object.assign(new k8s.V1ObjectMeta, input))
+            : io.failure(input, context);
+    },
+    (meta: k8s.V1ObjectMeta): string => {
+        return JSON.stringify(meta as k8s.V1ObjectMeta);
+    },
+)
+
 
 export interface IK8sObject {
     metadata?: k8s.V1ObjectMeta;
@@ -38,10 +77,6 @@ export class K8sObject implements IK8sObject {
             params.spec,
             params.status,
         );
-    }
-
-    public isObject() {
-        return this.metadata instanceof V1ObjectMeta;
     }
 
     public getLabels(): Labels | undefined {

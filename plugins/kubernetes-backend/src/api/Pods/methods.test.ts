@@ -33,56 +33,59 @@ beforeAll(() => {
     kc.loadFromOptions({ clusters: [dummyCluster], contexts: [], users: [] });
     KubeConfig.prototype.makeApiClient = jest.fn().mockReturnValue(new CoreV1Api);
 });
-describe('pod getting methods', () => {
-    beforeAll(() => {
-        // Mock listPodForAllNamespaces api call
-        CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
-            .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
-        // Mock listNamespacedPods api call
-        CoreV1Api.prototype.listNamespacedPod = jest.fn()
-            .mockReturnValueOnce(Promise.resolve(POD_LIST_FIXTURE));
-        // Mock readNamespacedPod api call
-        CoreV1Api.prototype.readNamespacedPod = jest.fn()
-            .mockReturnValue(Promise.resolve(POD_FIXTURE));
+describe('tests pod model', () => {
+    describe('pod getting methods', () => {
+        beforeAll(() => {
+            // Mock listPodForAllNamespaces api call
+            CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
+                .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
+            // Mock listNamespacedPods api call
+            CoreV1Api.prototype.listNamespacedPod = jest.fn()
+                .mockReturnValueOnce(Promise.resolve(POD_LIST_FIXTURE));
+            // Mock readNamespacedPod api call
+            CoreV1Api.prototype.readNamespacedPod = jest.fn()
+                .mockReturnValue(Promise.resolve(POD_FIXTURE));
 
-    });
+        });
 
-    it('gets pods from all namespaces', async () => {
+        it('gets pods from all namespaces', async () => {
 
-        const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-        const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
-        const actualResult: Pod[] = await getAllNamespacedPods(kc);
-        expect(actualResult).toEqual(expectedResult);
-    })
-    it('gets pods for a namespace', async () => {
+            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
+            const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
+            const actualResult: Pod[] = await getAllNamespacedPods(kc);
+            expect(actualResult).toEqual(expectedResult);
+        })
+        it('gets pods for a namespace', async () => {
 
-        const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-        const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
-        const actualResult: Pod[] = await getNamespacedPods(kc, { namespace: 'default' });
-        expect(actualResult).toEqual(expectedResult);
-    });
-    it('gets pod from name and namespace', async () => {
+            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
+            const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
+            const actualResult: Pod[] = await getNamespacedPods(kc, { namespace: 'default' });
+            expect(actualResult).toEqual(expectedResult);
+        });
+        it('gets pod from name and namespace', async () => {
 
 
-        const podRaw: V1Pod = POD_FIXTURE.body;
-        const expectedResult: Pod = Pod.buildFromV1Pod(podRaw);
-        const actualResult: Pod = await getNamespacedPod(kc, { namespace: 'default', name: 'dummy' });
-        expect(actualResult).toEqual(expectedResult);
-    });
-    it('returns error on empty kubeconfig file', async () => {
-        const configs: [KubeConfig, KubeConfig] = [new KubeConfig(), new KubeConfig()];
-        configs[1].loadFromOptions({ clusters: [], users: [], contexts: [] });
+            const podRaw: V1Pod = POD_FIXTURE.body;
+            const expectedResult: Pod = Pod.buildFromV1PodJSON(podRaw);
+            const actualResult: Pod = await getNamespacedPod(kc, { namespace: 'default', name: 'dummy' });
+            expect(actualResult).toEqual(expectedResult);
+        });
+        it('returns error on empty kubeconfig file', async () => {
+            const configs: [KubeConfig, KubeConfig] = [new KubeConfig(), new KubeConfig()];
+            configs[1].loadFromOptions({ clusters: [], users: [], contexts: [] });
 
-        configs.forEach(async (config: KubeConfig) => {
-            await expect(getAllNamespacedPods(config))
-                .rejects
-                .toThrowError('Kubernetes configuration file was empty!')
-            await expect(getNamespacedPods(config, { namespace: 'dummy' }))
-                .rejects
-                .toThrowError('Kubernetes configuration file was empty!')
-            await expect(getNamespacedPod(config, { namespace: 'dummy', name: 'dummy' }))
-                .rejects
-                .toThrowError('Kubernetes configuration file was empty!')
+            configs.forEach(async (config: KubeConfig) => {
+                await expect(getAllNamespacedPods(config))
+                    .rejects
+                    .toThrowError('Kubernetes configuration file was empty!')
+                await expect(getNamespacedPods(config, { namespace: 'dummy' }))
+                    .rejects
+                    .toThrowError('Kubernetes configuration file was empty!')
+                await expect(getNamespacedPod(config, { namespace: 'dummy', name: 'dummy' }))
+                    .rejects
+                    .toThrowError('Kubernetes configuration file was empty!')
+            });
         });
     });
-});
+
+})

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { V1Pod, V1PodSpec, V1PodStatus, V1ObjectMeta } from "@kubernetes/client-node";
+import { V1Pod, V1PodSpec, V1PodStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
 import { IK8sObject, K8sObject } from "../K8sObject/models"
 // import YAML from 'yaml';
 
@@ -47,12 +47,13 @@ export class Pod extends K8sObject {
             params.kind,
             params.apiVersion,
             params.metadata as V1ObjectMeta,
-            params.spec,
-            params.status,
+            params.spec as V1PodSpec,
+            params.status as V1PodStatus,
         );
     }
 
-    static buildFromV1Pod(v1Pod: V1Pod): Pod {
+
+    static buildFromV1PodJSON(v1Pod: V1Pod): Pod {
         const { kind, apiVersion, metadata, spec, status } = v1Pod;
         const name: string = metadata?.name ? metadata.name : "";
         return Pod.build({ name, kind, apiVersion, metadata, spec, status });
@@ -60,11 +61,11 @@ export class Pod extends K8sObject {
 
     static buildFromV1PodArray(v1PodList: V1Pod[]): Pod[] {
         const pods: Pod[] = new Array<Pod>();
-        v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1Pod(pod)));
+        v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1PodJSON(pod)));
         return pods;
     }
 
-    public buildV1Pod(): V1Pod {
+    public buildV1PodJSON(): V1Pod {
         return {
             kind: this.kind,
             apiVersion: this.apiVersion,
@@ -74,6 +75,18 @@ export class Pod extends K8sObject {
         };
     }
 
+    public getContainers(): V1Container[] | undefined {
+        const spec = this.spec as V1PodSpec;
+        if (spec)
+            return spec.containers;
+        return undefined;
+    }
+
+    public getMetadata(): V1ObjectMeta {
+        const spec = <V1ObjectMeta>(this.spec);
+        console.log(<V1ObjectMeta>(spec) instanceof V1ObjectMeta);
+        return this.spec as V1ObjectMeta
+    }
     constructor(
         public name: string,
         public kind?: string,

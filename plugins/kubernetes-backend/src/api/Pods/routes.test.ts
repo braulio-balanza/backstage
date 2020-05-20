@@ -99,7 +99,7 @@ describe('pod routes', () => {
     describe('GET /v1/getNamespacedPodFromName', () => {
         beforeEach(() => {
             methods.getNamespacedPod.mockResolvedValueOnce(
-                Pod.buildFromV1Pod(POD_FIXTURE)
+                Pod.buildFromV1PodJSON(POD_FIXTURE)
             );
         });
         afterEach(() => {
