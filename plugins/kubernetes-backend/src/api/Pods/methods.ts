@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
-import { returnUndefinedArray, stringifyLabels } from '../utils/utils'
+import { V1Pod } from '@kubernetes/client-node'
+import { ApiRoot } from 'kubernetes-client';
+import { stringifyLabels } from '../utils/utils'
 import { Labels } from '../K8sObject/models';
 import { Pod } from './models'
 
@@ -22,10 +23,9 @@ export interface IGetAllNamespacedPods {
     labels?: Labels;
 }
 
-export const getAllNamespacedPods = async (kc: KubeConfig, options?: IGetAllNamespacedPods): Promise<Pod[]> => {
+export const getAllNamespacedPods = async (client: ApiRoot, options?: IGetAllNamespacedPods): Promise<Pod[]> => {
     try {
-        const api = kc.makeApiClient(CoreV1Api);
-        const { body: { items } } = await api.listPodForAllNamespaces(...returnUndefinedArray(3), stringifyLabels(options?.labels));
+        const { body: { items } } = await client.api.v1.pods.get({ qs: { labelSelector: stringifyLabels(options?.labels) } });
         const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
         return pods;
     } catch (error) {
@@ -37,16 +37,12 @@ export interface IGetNamesacedPods {
     namespace: string;
     labels?: Labels;
 }
-export const getNamespacedPods = async (kc: KubeConfig, options: IGetNamesacedPods): Promise<Pod[]> => {
+export const getNamespacedPods = async (client: ApiRoot, options: IGetNamesacedPods): Promise<Pod[]> => {
     try {
-        const api = kc.makeApiClient(CoreV1Api);
-        const { body: { items } } = await api.listNamespacedPod(
-            options.namespace,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            stringifyLabels(options.labels));
+        const { body: { items } } = await client.api.v1.
+            namespaces(options.namespace).
+            pods.
+            get({ qs: { labelSelector: stringifyLabels(options?.labels) } });
         const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
         return pods;
     } catch (error) {
@@ -59,10 +55,9 @@ export interface IGetNamesacedPodFromName {
     namespace: string;
 }
 
-export const getNamespacedPod = async (kc: KubeConfig, options: IGetNamesacedPodFromName): Promise<Pod> => {
+export const getNamespacedPod = async (client: ApiRoot, options: IGetNamesacedPodFromName): Promise<Pod> => {
     try {
-        const api = kc.makeApiClient(CoreV1Api);
-        const { body } = await api.readNamespacedPod(options.name, options.namespace);
+        const { body } = await client.api.v1.namespaces(options.namespace).pods(options.name).get();
         const pod: Pod = Pod.buildFromV1PodJSON(body);
         return pod;
     } catch (error) {

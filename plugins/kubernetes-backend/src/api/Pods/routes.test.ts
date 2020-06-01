@@ -16,17 +16,19 @@
 
 import express, { Application } from "express";
 import expressPromiseRouter from "express-promise-router";
-import { KubeConfig } from '@kubernetes/client-node'
+import { KubeConfig } from '@kubernetes/client-node';
 import bodyParser from 'body-parser';
 import request from 'supertest';
+/* eslint-disable @typescript-eslint/camelcase*/
+import { Client1_13 } from 'kubernetes-client';
 import { bindRoutes } from "./routes";
 import { loadFixture } from '../utils/testUtils'
 import { Pod } from "./models";
 
 jest.mock('./methods');
-
+jest.mock('kubernetes-client')
 const methods = require.requireMock('./methods');
-const dummyKubeConfig = new KubeConfig();
+const dummyClient = new Client1_13({});
 const { body: { items: POD_LIST_FIXTURE } } = loadFixture('Pods', 'podListResponseFixture.json');
 const { body: POD_FIXTURE } = loadFixture('Pods', 'podResponseFixture.json');
 
@@ -40,7 +42,7 @@ describe('pod routes', () => {
         app = express();
         app.use(bodyParser.json());
         const router = expressPromiseRouter();
-        bindRoutes(router, dummyKubeConfig);
+        bindRoutes(router, dummyClient);
         app.use(router);
     });
 
@@ -49,7 +51,7 @@ describe('pod routes', () => {
         describe("GET /v1/getAllNamespacedPods", () => {
             beforeEach(() => {
                 methods.getAllNamespacedPods.mockResolvedValueOnce(
-                    Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
+                    Pod.buildFromV1PodJSONArray(POD_LIST_FIXTURE)
                 )
             });
             afterEach(() => {
@@ -62,7 +64,7 @@ describe('pod routes', () => {
                     .expect('Content-Type', /json/)
                     .expect(200)
                     .then(res => {
-                        expect(methods.getAllNamespacedPods).toHaveBeenCalledWith(dummyKubeConfig);
+                        expect(methods.getAllNamespacedPods).toHaveBeenCalledWith(dummyClient);
                         expect(res.body).toBeInstanceOf(Array);
                         expect(res.body.length).toBe(10);
                         res.body.forEach((element: any) => {
@@ -74,7 +76,7 @@ describe('pod routes', () => {
         describe('GET /v1/getNamespacedPods', () => {
             beforeEach(() => {
                 methods.getNamespacedPods.mockResolvedValueOnce(
-                    Pod.buildFromV1PodArray(POD_LIST_FIXTURE)
+                    Pod.buildFromV1PodJSONArray(POD_LIST_FIXTURE)
                 );
             });
             afterEach(() => {
@@ -88,7 +90,7 @@ describe('pod routes', () => {
                     .expect('Content-Type', /json/)
                     .expect(200)
                     .then(res => {
-                        expect(methods.getNamespacedPods).toHaveBeenCalledWith(dummyKubeConfig, { namespace: 'default' })
+                        expect(methods.getNamespacedPods).toHaveBeenCalledWith(dummyClient, { namespace: 'default' })
                         expect(res.body).toBeInstanceOf(Array);
                         expect(res.body.length).toBe(10);
                         res.body.forEach((element: any) => {
@@ -115,7 +117,7 @@ describe('pod routes', () => {
                     .expect(200)
                     .then(res => {
                         expect(methods.getNamespacedPod).toHaveBeenCalledWith(
-                            dummyKubeConfig, {
+                            dummyClient, {
                             name: 'hello-node-57c6f5dbf6-v2txn',
                             namespace: 'default'
                         })

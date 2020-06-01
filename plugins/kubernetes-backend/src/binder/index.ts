@@ -18,11 +18,17 @@ import { isConfigEmpty } from '../api/utils/utils';
 import { Router } from 'express';
 import { KubeConfig } from '@kubernetes/client-node';
 import { bindRoutes as bindPodRoutes } from '../api/Pods/routes';
+/* eslint-disable @typescript-eslint/camelcase*/
+import { Client1_13, ApiRoot } from 'kubernetes-client';
+const KubeRequest = require('kubernetes-client/backends/request');
+
 
 export const bindRoutes = async (router: Router) => {
 
     const kc: KubeConfig = new KubeConfig();
     kc.loadFromDefault();
     if (isConfigEmpty(kc)) throw new Error('Kubernetes configuration file was empty!');
-    bindPodRoutes(router, kc);
+    const backend = new KubeRequest({ backend: kc })
+    const client: ApiRoot = new Client1_13({ backend })
+    bindPodRoutes(router, client);
 }

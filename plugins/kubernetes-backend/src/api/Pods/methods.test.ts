@@ -13,62 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig, CoreV1Api, V1Pod } from '@kubernetes/client-node'
+import { V1Pod } from '@kubernetes/client-node'
 import { Pod } from './models'
 import { getAllNamespacedPods, getNamespacedPods, getNamespacedPod } from './methods'
 import { loadFixture } from '../utils/testUtils'
+/* eslint-disable @typescript-eslint/camelcase*/
+import { Client1_13, ApiRoot } from 'kubernetes-client';
 
-const POD_LIST_FIXTURE = loadFixture('Pods', 'podListResponseFixture.json');
 const POD_FIXTURE = loadFixture('Pods', 'podResponseFixture.json');
-const kc = new KubeConfig();
+const POD_LIST_FIXTURE = loadFixture('Pods', 'podListResponseFixture.json');
+jest.mock('kubernetes-client')
 
-beforeAll(() => {
-    const dummyCluster = {
-        caData: undefined,
-        caFile: '/home/dummy/.minikube/ca.crt',
-        name: 'minikube',
-        server: 'https://192.168.100.100:8443',
-        skipTLSVerify: false
-    };
-    kc.loadFromOptions({ clusters: [dummyCluster], contexts: [], users: [] });
-    KubeConfig.prototype.makeApiClient = jest.fn().mockReturnValue(new CoreV1Api);
-});
+const setUpPodMethod = (podMethodOverride?: Object) => {
+    const mockedPodMethods = {
+
+        pods: {
+            get: jest.fn().mockReturnValueOnce(POD_LIST_FIXTURE)
+        },
+        ...podMethodOverride
+    }
+
+    Client1_13.prototype.api =
+    {
+        v1: {
+            namespaces: jest.fn(() =>
+                mockedPodMethods
+            ),
+            pods: {
+                get: jest.fn().mockReturnValueOnce(POD_LIST_FIXTURE)
+            }
+        }
+    }
+};
+
 describe('tests pod model', () => {
+    const client: ApiRoot = new Client1_13({});;
     describe('pod getting methods', () => {
-        beforeAll(() => {
-            // Mock listPodForAllNamespaces api call
-            CoreV1Api.prototype.listPodForAllNamespaces = jest.fn()
-                .mockReturnValue(Promise.resolve(POD_LIST_FIXTURE));
-            // Mock listNamespacedPods api call
-            CoreV1Api.prototype.listNamespacedPod = jest.fn()
-                .mockReturnValueOnce(Promise.resolve(POD_LIST_FIXTURE));
-            // Mock readNamespacedPod api call
-            CoreV1Api.prototype.readNamespacedPod = jest.fn()
-                .mockReturnValue(Promise.resolve(POD_FIXTURE));
-
-        });
-
         it('gets pods from all namespaces', async () => {
 
+            setUpPodMethod();
             const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-            const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
-            const actualResult: Pod[] = await getAllNamespacedPods(kc);
-            expect(actualResult).toEqual(expectedResult);
+            const expectedResult: Pod[] = Pod.buildFromV1PodJSONArray(podsRaw);
+            const actualResult: Pod[] = await getAllNamespacedPods(client);
+            expect(JSON.stringify(actualResult)).toEqual(JSON.stringify(expectedResult));
         })
         it('gets pods for a namespace', async () => {
-
+            setUpPodMethod();
             const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-            const expectedResult: Pod[] = Pod.buildFromV1PodArray(podsRaw);
-            const actualResult: Pod[] = await getNamespacedPods(kc, { namespace: 'default' });
-            expect(actualResult).toEqual(expectedResult);
+            const expectedResult: Pod[] = Pod.buildFromV1PodJSONArray(podsRaw);
+            const actualResult: Pod[] = await getNamespacedPods(client, { namespace: 'default' });
+            expect(JSON.stringify(actualResult)).toEqual(JSON.stringify(expectedResult));
         });
         it('gets pod from name and namespace', async () => {
 
-
+            setUpPodMethod({
+                pods: jest.fn(() => ({
+                    get: jest.fn().mockReturnValueOnce(POD_FIXTURE)
+                })),
+            });
             const podRaw: V1Pod = POD_FIXTURE.body;
             const expectedResult: Pod = Pod.buildFromV1PodJSON(podRaw);
-            const actualResult: Pod = await getNamespacedPod(kc, { namespace: 'default', name: 'dummy' });
-            expect(actualResult).toEqual(expectedResult);
+            const actualResult: Pod = await getNamespacedPod(client, { namespace: 'default', name: 'dummy' });
+            expect(actualResult.spec).toEqual(expectedResult.spec);
+            expect(actualResult.status).toEqual(expectedResult.status);
+            expect(actualResult.metadata).toEqual(expectedResult.metadata);
+            expect(true).toBeTruthy();
         });
 
     });

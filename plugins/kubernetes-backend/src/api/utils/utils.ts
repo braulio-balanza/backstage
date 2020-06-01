@@ -28,3 +28,15 @@ export const stringifyLabels = (labels: undefined | Labels): string => {
             labelString = labelString.concat(`${key}=${value},`);
     return labelString.slice(0, -1);
 };
+interface TypeMap {
+    name: string;
+    baseName: string;
+    type: string;
+}
+export const getKeysFromTypeMap = (input: TypeMap[]): Array<string> => {
+    const keys = Array<string>();
+    input.forEach(typeMap => {
+        keys.push(typeMap.name);
+    });
+    return keys;
+}

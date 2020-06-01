@@ -1,0 +1,36 @@
+{
+    "creationTimestamp": "2020-04-28T22:32:45.000Z",
+    "generateName": "hello-node-57c6f5dbf6-",
+    "labels": {
+        "app": "hello-node",
+        "pod-template-hash": "57c6f5dbf6"
+    },
+    "managedFields": [
+        {
+            "apiVersion": "v1",
+            "manager": "kube-controller-manager",
+            "operation": "Update",
+            "time": "2020-04-28T22:32:45.000Z"
+        },
+        {
+            "apiVersion": "v1",
+            "manager": "kubelet",
+            "operation": "Update",
+            "time": "2020-05-05T06:27:42.000Z"
+        }
+    ],
+    "namespace": "default",
+    "ownerReferences": [
+        {
+            "apiVersion": "apps/v1",
+            "blockOwnerDeletion": true,
+            "controller": true,
+            "kind": "ReplicaSet",
+            "name": "hello-node-57c6f5dbf6",
+            "uid": "b0668b36-adbe-4c95-8e9d-f406d727f19c"
+        }
+    ],
+    "resourceVersion": "194773",
+    "selfLink": "/api/v1/namespaces/default/pods/hello-node-57c6f5dbf6-v2txn",
+    "uid": "f3ddd403-23e5-494e-9357-3323c6e3da23"
+}

@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { V1ObjectMeta, V1PodSpec, V1PodStatus, V1Container } from '@kubernetes/client-node'
-import { K8sObject } from './models';
+import { V1ObjectMeta, V1PodSpec, V1PodStatus, V1Container, V1ListMeta } from '@kubernetes/client-node'
+import { K8sObject, V1ObjectMeta as ObjectMetaTypeGuard } from './models';
+import { loadFixture } from '../utils/testUtils'
+
+const KUBE_META_OBJECT = loadFixture('K8sObject', 'V1ObjectMeta.json');
 
 describe('test K8sObject', () => {
     describe('K8sObject build methods', () => {
@@ -23,5 +26,14 @@ describe('test K8sObject', () => {
                 { metadata: {}, spec: { containers: new Array<V1Container>() }, status: {} };
             expect(K8sObject.build(podLikeObjecy)).toBeInstanceOf(K8sObject);
         });
+    })
+    describe('test object meta typeguard', () => {
+        it('decodes an object meta string', () => {
+            expect(ObjectMetaTypeGuard.is(KUBE_META_OBJECT)).toBeTruthy();
+        })
+        it('rejects an object that isn`t a V1ObjectMeta', () => {
+            const wrongObject: V1ListMeta = { 'remainingItemCount': 0, 'resourceVersion': 'test', 'selfLink': 'test' };
+            expect(ObjectMetaTypeGuard.is(wrongObject)).toEqual(false);
+        })
     })
 });

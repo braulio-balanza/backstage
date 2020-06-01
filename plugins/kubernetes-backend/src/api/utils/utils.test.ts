@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig } from '@kubernetes/client-node';
+import { KubeConfig, V1ObjectMeta, V1ListMeta } from '@kubernetes/client-node';
 import { Labels } from '../K8sObject/models'
-import { isConfigEmpty, stringifyLabels, returnUndefinedArray } from './utils'
+import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap } from './utils'
 
 describe('Util functions general testing', () => {
     describe('isConfigEmpty works properly', () => {
@@ -42,4 +42,12 @@ describe('Util functions general testing', () => {
             expect(returnUndefinedArray(4)).toEqual(undefinedArray);
         })
     })
+    describe('tests getKeysOfKubeObject', () => {
+        it('returns the correct keys', () => {
+            const V1ObjectMetaKeys: Array<string> = V1ObjectMeta.getAttributeTypeMap().map(typeMap => typeMap.name);
+            const V1ListMetaKeys: Array<string> = V1ListMeta.getAttributeTypeMap().map(typeMap => typeMap.name)
+            expect(getKeysFromTypeMap(V1ObjectMeta.getAttributeTypeMap())).toEqual(V1ObjectMetaKeys);
+            expect(getKeysFromTypeMap(V1ListMeta.getAttributeTypeMap())).toEqual(V1ListMetaKeys);
+        })
+    });
 })

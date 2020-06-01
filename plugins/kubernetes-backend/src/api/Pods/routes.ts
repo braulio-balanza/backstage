@@ -23,15 +23,14 @@ import {
     IGetNamesacedPodFromName,
 } from './methods'
 import { Pod } from './models'
-import { KubeConfig } from '@kubernetes/client-node';
+import { ApiRoot } from 'kubernetes-client';
 
+export const bindRoutes = (router: Router, client: ApiRoot): void => {
 
-export const bindRoutes = (router: Router, kc: KubeConfig): void => {
     try {
-
         router.get('/v1/getAllNamespacedPods', async (_: Request, res: Response<Pod[]>) => {
             try {
-                const pods: Pod[] = await getAllNamespacedPods(kc);
+                const pods: Pod[] = await getAllNamespacedPods(client);
                 res.status(200).json(pods);
             } catch (e) {
                 res.status(500).send(e)
@@ -41,7 +40,7 @@ export const bindRoutes = (router: Router, kc: KubeConfig): void => {
         router.get('/v1/getNamespacedPods/:podOptions', async (req: Request, res: Response) => {
             try {
                 const options: IGetNamesacedPods = JSON.parse(req.params.podOptions);
-                const pods: Pod[] = await getNamespacedPods(kc, options);
+                const pods: Pod[] = await getNamespacedPods(client, options);
                 res.status(200).json(pods);
             } catch (e) {
                 res.status(500).send(e);
@@ -50,9 +49,8 @@ export const bindRoutes = (router: Router, kc: KubeConfig): void => {
 
         router.get('/v1/getNamespacedPod/:podOptions', async (req: Request, res: Response<Pod>) => {
             try {
-                kc.loadFromDefault();
                 const options: IGetNamesacedPodFromName = JSON.parse(req.params.podOptions);
-                const pod: Pod = await getNamespacedPod(kc, options);
+                const pod: Pod = await getNamespacedPod(client, options);
                 res.status(200).json(pod);
             }
             catch (e) {

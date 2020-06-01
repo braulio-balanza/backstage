@@ -16,7 +16,7 @@
 
 import * as k8s from '@kubernetes/client-node'
 import * as io from 'io-ts'
-
+import { getKeysFromTypeMap } from '../utils/utils'
 
 export type Labels = { [key: string]: string };
 
@@ -26,18 +26,7 @@ export type K8sStatus = k8s.V1PodStatus | k8s.V1NodeStatus | k8s.V1DeploymentSta
 
 export type meta = k8s.V1ObjectMeta | k8s.V1ListMeta;
 
-interface TypeMap {
-    name: string;
-    baseName: string;
-    type: string;
-}
-export const getKeysOfTypeMap = (input: TypeMap[]): Array<string> => {
-    const keys = Array<string>();
-    input.forEach(typeMap => {
-        keys.push(typeMap.name);
-    });
-    return keys;
-}
+
 
 export const V1ObjectMeta = new io.Type<
     k8s.V1ObjectMeta,
@@ -48,12 +37,16 @@ export const V1ObjectMeta = new io.Type<
     (unknown: unknown): unknown is k8s.V1ObjectMeta => {
         if (!(unknown instanceof Object))
             return false;
-        return Object.keys(unknown).every(key => getKeysOfTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap()).includes(key))
+        const V1ObjectMetaKeys = getKeysFromTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap());
+        const unknownObjectKeys = Object.keys(unknown);
+        return unknownObjectKeys.length ? unknownObjectKeys.every(key => V1ObjectMetaKeys.includes(key)) : false
     },
     (input: unknown, context: io.Context) => {
         if (!(input instanceof Object))
             return io.failure(input, context);
-        return Object.keys(input).every(key => getKeysOfTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap()).includes(key))
+        const V1ObjectMetaKeys = getKeysFromTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap());
+        const inputObjectKeys = Object.keys(input);
+        return inputObjectKeys.length && inputObjectKeys.every(key => V1ObjectMetaKeys.includes(key))
             ? io.success(Object.assign(new k8s.V1ObjectMeta, input))
             : io.failure(input, context);
     },

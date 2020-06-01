@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { loadFixture } from '../utils/testUtils'
-import { Pod } from './models'
-import { V1Pod, V1Container } from '@kubernetes/client-node'
+import { Pod, PodOverview } from './models'
+import { V1Pod, V1Container, V1ContainerStatus } from '@kubernetes/client-node'
 
 import {
     Labels,
@@ -62,7 +62,40 @@ describe(`tests model's methods work properly`, () => {
             else
                 throw new Error('Containers should return');
         })
+        it('returns the pods container statuses', () => {
+            const containerStatuses: V1ContainerStatus[] | undefined = testPod.getContainersStatuses()
+            if (containerStatuses)
+                expect(containerStatuses).toEqual(v1Pod.status?.containerStatuses)
+            else
+                throw new Error('Containers should return');
+        });
+        it('returns a string with the proportion of ready/total containers', () => {
+            const containersReady: String = testPod.getContainersReady();
+            expect(containersReady).toEqual('1/1');
+        })
+        it('returns the total number of container restarts', () => {
+            const containerRestarts: number = testPod.getContainersRestarts();
+            expect(containerRestarts).toEqual(8);
+        })
+        it('returns the date created at', () => {
+            const createdAt: Date | undefined = testPod.getCreatedAt();
+            expect(createdAt).toEqual(new Date('2020-04-28T22:32:45Z'));
+        });
+        it('returns a pod overview', () => {
+            const podOverview: PodOverview = {
+                name: 'hello-node-57c6f5dbf6-v2txn',
+                containersReady: '1/1',
+                restarts: 8,
+                age: 0,
+                ip: '172.17.0.3"',
+                node: 'minikube',
+                created: new Date('2020-04-28T22:32:45Z'),
+            };
+            podOverview.age = Date.now() - podOverview.created.getSeconds();
+            expect(true).toEqual(podOverview);
+        });
     })
+    // Will want to move this to k8sObject in the future
     describe('tests K8sObject methods', () => {
         it('gets pod labels', () => {
             const podLabels: Labels = { "app": "hello-node", "pod-template-hash": "57c6f5dbf6" };

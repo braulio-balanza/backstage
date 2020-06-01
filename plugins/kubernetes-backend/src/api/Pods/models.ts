@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import { V1Pod, V1PodSpec, V1PodStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
-import { IK8sObject, K8sObject } from "../K8sObject/models"
+import { V1Pod, V1PodSpec, V1PodStatus, V1ContainerStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
+import { IK8sObject, K8sObject, V1ObjectMeta as ObjectMetaTypeGuard } from "../K8sObject/models"
+import { fold } from "fp-ts/lib/Either";
+import { pipe } from 'fp-ts/lib/pipeable';
+import { Errors as ioErrors } from 'io-ts';
 // import YAML from 'yaml';
 
 export interface PodOverview {
     name: string,
-    application?: string,
-    containersReady: number,
+    containersReady: string,
     restarts: number,
     age: number,
     ip: string,
@@ -59,7 +61,7 @@ export class Pod extends K8sObject {
         return Pod.build({ name, kind, apiVersion, metadata, spec, status });
     }
 
-    static buildFromV1PodArray(v1PodList: V1Pod[]): Pod[] {
+    static buildFromV1PodJSONArray(v1PodList: V1Pod[]): Pod[] {
         const pods: Pod[] = new Array<Pod>();
         v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1PodJSON(pod)));
         return pods;
@@ -84,8 +86,44 @@ export class Pod extends K8sObject {
 
     public getMetadata(): V1ObjectMeta {
         const spec = <V1ObjectMeta>(this.spec);
-        console.log(<V1ObjectMeta>(spec) instanceof V1ObjectMeta);
-        return this.spec as V1ObjectMeta
+        return spec as V1ObjectMeta
+    }
+
+    public getContainersStatuses = (): Array<V1ContainerStatus> | undefined => {
+        const containerStatuses = (this.status as V1PodStatus).containerStatuses;
+        return containerStatuses ? containerStatuses : undefined;
+    };
+
+    public getContainersReady(): String {
+        const containerStatuses = this.getContainersStatuses();
+        let ready: number = 0;
+        let total: number = 0;
+        if (containerStatuses)
+            [ready, total] = containerStatuses.reduce(([r, t], status) => [
+                status.ready ? r + 1 : r,
+                t + 1
+            ], [0, 0])
+        return `${ready}/${total}`
+    }
+
+    public getContainersRestarts(): number {
+        const containerStatuses = this.getContainersStatuses();
+        let restarts: number = 0;
+        if (containerStatuses)
+            restarts = containerStatuses.reduce((r, status) => r + status.restartCount, 0);
+        return restarts;
+    }
+
+    public getCreatedAt(): Date | undefined {
+        const meta: V1ObjectMeta = pipe(
+            ObjectMetaTypeGuard.decode(this.metadata),
+            fold(
+                (e: ioErrors) => { throw e },
+                (metadata: V1ObjectMeta) => metadata
+            )
+        );
+        const timestamp = meta.creationTimestamp
+        return timestamp ? new Date(timestamp) : undefined
     }
     constructor(
         public name: string,
