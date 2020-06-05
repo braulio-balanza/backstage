@@ -15,11 +15,11 @@
  */
 import { loadFixture } from '../utils/testUtils'
 import { Pod, PodOverview } from './models'
-import { V1Pod, V1Container, V1ContainerStatus } from '@kubernetes/client-node'
+import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodSpec, V1PodStatus } from '@kubernetes/client-node'
 
 import {
     Labels,
-    V1ObjectMeta as CustomMeta,
+    V1ObjectMetaGuard as CustomMeta,
 } from 'api/K8sObject/models';
 const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
 
@@ -45,7 +45,7 @@ describe(`tests model's methods work properly`, () => {
         })
         it("builds JSON from Pod", () => {
             const testPodFromV1: Pod = Pod.buildFromV1PodJSON(v1Pod);
-            expect(testPodFromV1.buildV1PodJSON()).toStrictEqual(v1Pod);
+            expect(testPodFromV1.buildV1PodJSON()).toEqual(v1Pod);
         })
         it(" Builds Pod from V1Pod with no name ", () => {
             const noNameV1Pod = v1Pod;
@@ -81,18 +81,46 @@ describe(`tests model's methods work properly`, () => {
             const createdAt: Date | undefined = testPod.getCreatedAt();
             expect(createdAt).toEqual(new Date('2020-04-28T22:32:45Z'));
         });
+        it('returns the pods age', () => {
+            const age: number | undefined = testPod.getAge();
+            if (age)
+                expect(typeof age).toEqual('number')
+            else
+                throw Error('test pod did not return date');
+        })
+        it('returns a pod IP', () => {
+            const podIP: string = testPod.getPodIp();
+            expect(podIP).toMatchInlineSnapshot(`"172.17.0.3"`)
+        });
+        it('returns the node name', () => {
+            const nodeName: string = testPod.getNodeName();
+            expect(nodeName).toMatchInlineSnapshot(`"minikube"`)
+        });
+        it('returns the metadata as a V1ObjectMeta', () => {
+            const meta: unknown = testPod.getMetadata();
+            expect(meta).toBeInstanceOf(V1ObjectMeta)
+        })
+        it('returns the spec as a V1PodSpec', () => {
+            const spec: unknown = testPod.getSpec();
+            expect(spec).toBeInstanceOf(V1PodSpec);
+        });
+        it('returns the status as a V1PodStatus', () => {
+            const status: unknown = testPod.getStatus();
+            expect(status).toBeInstanceOf(V1PodStatus);
+        })
         it('returns a pod overview', () => {
             const podOverview: PodOverview = {
                 name: 'hello-node-57c6f5dbf6-v2txn',
                 containersReady: '1/1',
                 restarts: 8,
                 age: 0,
-                ip: '172.17.0.3"',
+                ip: '172.17.0.3',
                 node: 'minikube',
                 created: new Date('2020-04-28T22:32:45Z'),
             };
-            podOverview.age = Date.now() - podOverview.created.getSeconds();
-            expect(true).toEqual(podOverview);
+            if (podOverview.created)
+                podOverview.age = Date.now() - podOverview.created.getSeconds();
+            expect(testPod.getPodOverview()).toEqual(podOverview);
         });
     })
     // Will want to move this to k8sObject in the future

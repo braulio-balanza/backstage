@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { V1ObjectMeta, V1PodSpec, V1PodStatus, V1Container, V1ListMeta } from '@kubernetes/client-node'
-import { K8sObject, V1ObjectMeta as ObjectMetaTypeGuard } from './models';
+import { K8sObject, V1ObjectMetaGuard as ObjectMetaTypeGuard } from './models';
 import { loadFixture } from '../utils/testUtils'
 
 const KUBE_META_OBJECT = loadFixture('K8sObject', 'V1ObjectMeta.json');
@@ -23,7 +23,7 @@ describe('test K8sObject', () => {
     describe('K8sObject build methods', () => {
         it('can build from V1Pod like object', () => {
             const podLikeObjecy: { metadata: V1ObjectMeta, spec: V1PodSpec, status: V1PodStatus } =
-                { metadata: {}, spec: { containers: new Array<V1Container>() }, status: {} };
+                { metadata: KUBE_META_OBJECT, spec: { containers: new Array<V1Container>() }, status: {} };
             expect(K8sObject.build(podLikeObjecy)).toBeInstanceOf(K8sObject);
         });
     })

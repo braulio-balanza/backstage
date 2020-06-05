@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig, CoreV1Api } from '@kubernetes/client-node';
+/* eslint-disable */
+// import { KubeConfig, /* CoreV1Api */ } from '@kubernetes/client-node';
+import * as GoDaddyKubernetes from 'kubernetes-client'
+// const { KubeConfig } = require('kubernetes-client')
+// const Request = require('kubernetes-client/backends/request')
+// import { getAllNamespacedPods } from './api/Pods/methods'
 // import { Pod } from './api/Pods/models';
 // import { getAllNamespacedPods } from './api/Pods/methods'
 // import { Pod } from './api/Pods/models'
@@ -23,20 +28,38 @@ import { KubeConfig, CoreV1Api } from '@kubernetes/client-node';
 //     console.log(res.body.items);
 // });
 
+const { KubeConfig } = require('kubernetes-client')
+const KubeRequest = require('kubernetes-client/backends/request')
 export const testFunction = async () => {
     console.log('This is being executed');
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-    kc.setCurrentContext('minikube');
+    const Client = GoDaddyKubernetes.Client1_13;
+    // const config = GoDaddyKubernetes.config;
+    // config.fromKubeconfig();
+    // const config = new KubeConfig();
+    // config.loadFromDefault();
+    const config = new KubeConfig()
+    config.loadFromDefault()
+    const backend = new KubeRequest({ kubeconfig: config })
+    // const backend = new Request({ config });
+    // const goDaddyConfig: GoDaddyKubernetes.ClientConfiguration = GoDaddyKubernetes.config.fromKubeconfig(config, 'minikube');
+    // const client = new Client({ version: '1.13', config: goDaddyConfig });
+    // const backend = new Request({ config });
+    // const client = new Client({ version: '1.13' });
+    const client = new Client({ backend });
+    // const kc = new KubeConfig();
+    // kc.loadFromDefault();
+    // kc.setCurrentContext('standard-cluster-1');
     // kc.setCurrentContext('minikube');
     // const clusterRes: ClusterResponse = kc.getClusters()[0];
     // const testCluster: Cluster = { name: clusterRes.name, server: clusterRes.server };
-    const k8sApi = kc.makeApiClient(CoreV1Api);
+    // const k8sApi = kc.makeApiClient(CoreV1Api);
     // try {
-    const testValue = await k8sApi.listNamespacedPod('default');
+    // const testValue = await k8sApi.listNamespacedPod('default', undefined, undefined, undefined, undefined, 'app=nginx-test');
+    // const testValue = await getAllNamespacedPods(kc, { labels: { "app": "nginx-test-2" } });
+    // const testValue = await k8sApi.listNode();
     // const testValue: Pod[] = await getAllNamespacedPods(kc);
     // const testValue = await k8sApi.readNamespacedPod("event-exporter-v0.2.5-599d65f456-nxn6k", "kube-system");
-    return { response: testValue };
+    return { response: await client.api.v1.pods.get()/* await client.api.v1.pods.get()*/ };
     // } catch (e) {
     // return { response: e.message }
     // }

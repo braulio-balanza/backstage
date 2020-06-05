@@ -15,20 +15,17 @@
  */
 
 import { V1Pod, V1PodSpec, V1PodStatus, V1ContainerStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
-import { IK8sObject, K8sObject, V1ObjectMeta as ObjectMetaTypeGuard } from "../K8sObject/models"
-import { fold } from "fp-ts/lib/Either";
-import { pipe } from 'fp-ts/lib/pipeable';
-import { Errors as ioErrors } from 'io-ts';
+import { IK8sObject, K8sObject } from "../K8sObject/models"
 // import YAML from 'yaml';
 
 export interface PodOverview {
-    name: string,
+    name?: string,
     containersReady: string,
     restarts: number,
-    age: number,
+    created?: Date,
+    age?: number,
     ip: string,
     node: string,
-    created: Date,
 }
 
 
@@ -36,7 +33,7 @@ export interface IPod extends IK8sObject {
     name: string;
     kind?: string;
     apiVersion?: string;
-    metadata?: V1ObjectMeta;
+    metadata?: V1ObjectMeta
     spec?: V1PodSpec;
     status?: V1PodStatus;
 }
@@ -48,7 +45,7 @@ export class Pod extends K8sObject {
             params.name,
             params.kind,
             params.apiVersion,
-            params.metadata as V1ObjectMeta,
+            params.metadata,
             params.spec as V1PodSpec,
             params.status as V1PodStatus,
         );
@@ -84,17 +81,23 @@ export class Pod extends K8sObject {
         return undefined;
     }
 
-    public getMetadata(): V1ObjectMeta {
-        const spec = <V1ObjectMeta>(this.spec);
-        return spec as V1ObjectMeta
+    public getMetadata(): V1ObjectMeta | undefined {
+        return this.metadata ? this.metadata as V1ObjectMeta : undefined;
     }
 
+    public getSpec(): V1PodSpec | undefined {
+        return this.spec ? this.spec as V1PodSpec : undefined;
+    }
+
+    public getStatus(): V1PodStatus | undefined {
+        return this.status ? this.status as V1PodStatus : undefined;
+    }
     public getContainersStatuses = (): Array<V1ContainerStatus> | undefined => {
         const containerStatuses = (this.status as V1PodStatus).containerStatuses;
         return containerStatuses ? containerStatuses : undefined;
     };
 
-    public getContainersReady(): String {
+    public getContainersReady(): string {
         const containerStatuses = this.getContainersStatuses();
         let ready: number = 0;
         let total: number = 0;
@@ -115,15 +118,34 @@ export class Pod extends K8sObject {
     }
 
     public getCreatedAt(): Date | undefined {
-        const meta: V1ObjectMeta = pipe(
-            ObjectMetaTypeGuard.decode(this.metadata),
-            fold(
-                (e: ioErrors) => { throw e },
-                (metadata: V1ObjectMeta) => metadata
-            )
-        );
-        const timestamp = meta.creationTimestamp
+        const timestamp = this.metadata?.creationTimestamp
         return timestamp ? new Date(timestamp) : undefined
+    }
+
+    public getAge(): number | undefined {
+        const createdAt = this.getCreatedAt();
+        return createdAt ? Date.now() - createdAt.getSeconds() : undefined;
+    }
+    public getPodIp(): string {
+        const status = this.getStatus();
+        return status?.podIP ? status.podIP : '';
+    };
+
+    public getNodeName(): string {
+        const spec = this.getSpec();
+        return spec?.nodeName ? spec.nodeName : '';
+    }
+    public getPodOverview(): PodOverview {
+        const overview: PodOverview = {
+            name: this.getMetadata()?.name,
+            containersReady: this.getContainersReady(),
+            restarts: this.getContainersRestarts(),
+            age: this.getAge(),
+            ip: this.getPodIp(),
+            node: this.getNodeName(),
+            created: this.getCreatedAt(),
+        }
+        return overview;
     }
     constructor(
         public name: string,

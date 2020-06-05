@@ -16,6 +16,7 @@
 
 import express from 'express';
 import { bindRoutes } from './binder/index'
+import { testFunction } from './testFunction'
 export const router = express.Router();
 router.get('/', async (_, res) => {
   res
@@ -25,6 +26,7 @@ router.get('/', async (_, res) => {
       { id: 'component2' },
       { id: 'component3' },
       { id: 'component4' },
+      await testFunction()
     ]);
 });
 bindRoutes(router);
