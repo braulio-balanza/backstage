@@ -15,7 +15,11 @@
  */
 
 import { V1Pod, V1PodSpec, V1PodStatus, V1ContainerStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
-import { IK8sObject, K8sObject } from "../K8sObject/models"
+import { IK8sObject, K8sObject } from "../K8sObject/models";
+import { Type, success, failure, Context } from "io-ts/lib";
+import { isKubeObject } from '../utils/utils';
+import { pipe } from "fp-ts/lib/pipeable";
+import { fold } from 'fp-ts/lib/Either'
 // import YAML from 'yaml';
 
 export interface PodOverview {
@@ -38,6 +42,51 @@ export interface IPod extends IK8sObject {
     status?: V1PodStatus;
 }
 
+const V1PodStatusGuard = new Type<
+    V1PodStatus,
+    string,
+    unknown
+>(
+    'V1PodStatus',
+    (input: unknown): input is V1PodStatus => isKubeObject(input, V1PodStatus),
+    (input: unknown, context: Context) =>
+        isKubeObject(input, V1PodStatus)
+            ? success(Object.assign(new V1PodStatus, input))
+            : failure(input, context),
+    (status: V1PodStatus): string => JSON.stringify(status),
+)
+export const decodePodStatus = (input: unknown): V1PodStatus | undefined =>
+    input
+        ? pipe(V1PodStatusGuard.decode(input),
+            fold(
+                () => { throw new Error('Error decoding V1PodStatus') },
+                status => status))
+        : undefined;
+
+
+const V1PodSpecGuard = new Type<
+    V1PodSpec,
+    string,
+    unknown
+>(
+    'V1PodSpec',
+    (input: unknown): input is V1PodSpec => isKubeObject(input, V1PodSpec),
+    (input: unknown, context: Context) => isKubeObject(input, V1PodSpec)
+        ? success(Object.assign(new V1PodSpec, input))
+        : failure(input, context),
+    (spec: V1PodSpec) => JSON.stringify(spec),
+)
+
+export const decodePodSpec = (input: unknown): V1PodSpec | undefined =>
+    input
+        ? pipe(V1PodSpecGuard.decode(input),
+            fold(
+                () => { throw new Error('Error decoding V1PodSpec.') },
+                spec => spec
+            ))
+        : undefined;
+
+
 export class Pod extends K8sObject {
 
     static build(params: IPod): Pod {
@@ -45,12 +94,11 @@ export class Pod extends K8sObject {
             params.name,
             params.kind,
             params.apiVersion,
+            params.status,
             params.metadata,
-            params.spec as V1PodSpec,
-            params.status as V1PodStatus,
+            params.spec
         );
     }
-
 
     static buildFromV1PodJSON(v1Pod: V1Pod): Pod {
         const { kind, apiVersion, metadata, spec, status } = v1Pod;
@@ -93,7 +141,7 @@ export class Pod extends K8sObject {
         return this.status ? this.status as V1PodStatus : undefined;
     }
     public getContainersStatuses = (): Array<V1ContainerStatus> | undefined => {
-        const containerStatuses = (this.status as V1PodStatus).containerStatuses;
+        const containerStatuses = this.getStatus()?.containerStatuses;
         return containerStatuses ? containerStatuses : undefined;
     };
 
@@ -117,15 +165,6 @@ export class Pod extends K8sObject {
         return restarts;
     }
 
-    public getCreatedAt(): Date | undefined {
-        const timestamp = this.metadata?.creationTimestamp
-        return timestamp ? new Date(timestamp) : undefined
-    }
-
-    public getAge(): number | undefined {
-        const createdAt = this.getCreatedAt();
-        return createdAt ? Date.now() - createdAt.getSeconds() : undefined;
-    }
     public getPodIp(): string {
         const status = this.getStatus();
         return status?.podIP ? status.podIP : '';
@@ -147,15 +186,18 @@ export class Pod extends K8sObject {
         }
         return overview;
     }
+
+
+
     constructor(
         public name: string,
         public kind?: string,
         public apiVersion?: string,
+        status?: V1PodStatus,
         metadata?: V1ObjectMeta,
         spec?: V1PodSpec,
-        status?: V1PodStatus,
     ) {
-        super(metadata, spec, status)
+        super(metadata, decodePodSpec(spec), decodePodStatus(status))
     };
 
 } 

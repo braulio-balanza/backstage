@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 import { loadFixture } from '../utils/testUtils'
-import { Pod, PodOverview } from './models'
+import { Pod, PodOverview, decodePodSpec, decodePodStatus } from './models'
 import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodSpec, V1PodStatus } from '@kubernetes/client-node'
 
 import {
-    Labels,
     V1ObjectMetaGuard as CustomMeta,
 } from 'api/K8sObject/models';
 const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
 
 describe(`tests model's methods work properly`, () => {
+    const testPod: Pod = Pod.buildFromV1PodJSON(v1Pod);
+
     describe(`builds pod`, () => {
-        const testPod: Pod = Pod.buildFromV1PodJSON(v1Pod);
         it(" builds pod from V1Pod", () => {
             expect(typeof testPod.name).toEqual("string");
             expect(typeof testPod.kind).toEqual("string");
@@ -54,7 +54,6 @@ describe(`tests model's methods work properly`, () => {
         });
     });
     describe('tests pods methods', () => {
-        const testPod: Pod = Pod.buildFromV1PodJSON(v1Pod);
         it('returns list of containers', () => {
             const containersFromPod: V1Container[] | undefined = testPod.getContainers();
             if (containersFromPod)
@@ -77,17 +76,7 @@ describe(`tests model's methods work properly`, () => {
             const containerRestarts: number = testPod.getContainersRestarts();
             expect(containerRestarts).toEqual(8);
         })
-        it('returns the date created at', () => {
-            const createdAt: Date | undefined = testPod.getCreatedAt();
-            expect(createdAt).toEqual(new Date('2020-04-28T22:32:45Z'));
-        });
-        it('returns the pods age', () => {
-            const age: number | undefined = testPod.getAge();
-            if (age)
-                expect(typeof age).toEqual('number')
-            else
-                throw Error('test pod did not return date');
-        })
+
         it('returns a pod IP', () => {
             const podIP: string = testPod.getPodIp();
             expect(podIP).toMatchInlineSnapshot(`"172.17.0.3"`)
@@ -96,20 +85,17 @@ describe(`tests model's methods work properly`, () => {
             const nodeName: string = testPod.getNodeName();
             expect(nodeName).toMatchInlineSnapshot(`"minikube"`)
         });
-        it('returns the metadata as a V1ObjectMeta', () => {
-            const meta: unknown = testPod.getMetadata();
-            expect(meta).toBeInstanceOf(V1ObjectMeta)
-        })
-        it('returns the spec as a V1PodSpec', () => {
-            const spec: unknown = testPod.getSpec();
-            expect(spec).toBeInstanceOf(V1PodSpec);
+        describe('tests the metadata type guard', () => {
+            it('returns the metadata as a V1ObjectMeta', () => {
+                const meta: unknown = testPod.getMetadata();
+                expect(meta).toBeInstanceOf(V1ObjectMeta)
+            })
+
         });
-        it('returns the status as a V1PodStatus', () => {
-            const status: unknown = testPod.getStatus();
-            expect(status).toBeInstanceOf(V1PodStatus);
-        })
+
+
         it('returns a pod overview', () => {
-            const podOverview: PodOverview = {
+            const toCompare: PodOverview = {
                 name: 'hello-node-57c6f5dbf6-v2txn',
                 containersReady: '1/1',
                 restarts: 8,
@@ -118,17 +104,37 @@ describe(`tests model's methods work properly`, () => {
                 node: 'minikube',
                 created: new Date('2020-04-28T22:32:45Z'),
             };
-            if (podOverview.created)
-                podOverview.age = Date.now() - podOverview.created.getSeconds();
-            expect(testPod.getPodOverview()).toEqual(podOverview);
+            const podOverview: PodOverview = testPod.getPodOverview();
+            // copy age property to avoid flaky test 
+            toCompare.age = podOverview.age;
+            expect(podOverview).toMatchObject(toCompare);
         });
+        it('decodes pod status with proper type', () => {
+            expect(testPod.status).toBeInstanceOf(V1PodStatus);
+        })
     })
     // Will want to move this to k8sObject in the future
     describe('tests K8sObject methods', () => {
-        it('gets pod labels', () => {
-            const podLabels: Labels = { "app": "hello-node", "pod-template-hash": "57c6f5dbf6" };
-            const testPod: Pod = Pod.buildFromV1PodJSON(v1Pod);
-            expect(testPod.getLabels()).toEqual(podLabels);
-        })
-    })
+
+    });
+    describe('tests typeguards', () => {
+        const status: unknown = testPod.getStatus();
+        const spec: unknown = testPod.getSpec();
+        describe('tests the V1PodSpec type guard', () => {
+            it('returns the spec as a V1PodSpec', () => {
+                expect(spec).toBeInstanceOf(V1PodSpec);
+            });
+            it('gives error if object not a V1PodSpec', () => {
+                expect(() => decodePodSpec(status)).toThrowError('Error decoding V1PodSpec');
+            })
+        });
+        describe('tests the V1PodStatus type guard', () => {
+            it('returns the status as a V1PodStatus', () => {
+                expect(status).toBeInstanceOf(V1PodStatus);
+            });
+            it('gives error if object not a V1PodStatus', () => {
+                expect(() => decodePodStatus(spec)).toThrowError('Error decoding V1PodStatus');
+            })
+        });
+    });
 })

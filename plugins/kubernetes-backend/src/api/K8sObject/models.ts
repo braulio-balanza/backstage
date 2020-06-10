@@ -18,7 +18,7 @@ import * as k8s from '@kubernetes/client-node'
 import { Type, Context, failure, success } from 'io-ts/lib'
 import { fold } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { getKeysFromTypeMap } from '../utils/utils'
+import { isKubeObject } from '../utils/utils'
 
 export type Labels = { [key: string]: string };
 
@@ -37,26 +37,25 @@ export const V1ObjectMetaGuard = new Type<
 >(
     'V1ObjectMeta',
     (unknown: unknown): unknown is k8s.V1ObjectMeta => {
-        if (!(unknown instanceof Object))
-            return false;
-        const V1ObjectMetaKeys = getKeysFromTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap());
-        const unknownObjectKeys = Object.keys(unknown);
-        return unknownObjectKeys.length ? unknownObjectKeys.every(key => V1ObjectMetaKeys.includes(key)) : false
+        return isKubeObject(unknown, k8s.V1ObjectMeta);
     },
     (input: unknown, context: Context) => {
-        if (!(input instanceof Object))
-            return failure(input, context);
-        const V1ObjectMetaKeys = getKeysFromTypeMap(k8s.V1ObjectMeta.getAttributeTypeMap());
-        const inputObjectKeys = Object.keys(input);
-        return inputObjectKeys.length && inputObjectKeys.every(key => V1ObjectMetaKeys.includes(key))
+        return isKubeObject(input, k8s.V1ObjectMeta)
             ? success(Object.assign(new k8s.V1ObjectMeta, input))
             : failure(input, context);
     },
     (meta: k8s.V1ObjectMeta): string => {
-        return JSON.stringify(meta as k8s.V1ObjectMeta);
+        return JSON.stringify(meta);
     },
 )
-
+const decodeMetadata = (metadataToDecode: unknown): k8s.V1ObjectMeta | undefined => {
+    if (typeof metadataToDecode === 'undefined') return metadataToDecode;
+    return pipe(V1ObjectMetaGuard.decode(metadataToDecode),
+        fold(
+            () => { throw new Error('Error decoding V1ObjectMeta') },
+            content => content,
+        ));
+}
 
 export interface IK8sObject {
     metadata?: k8s.V1ObjectMeta;
@@ -67,9 +66,8 @@ export interface IK8sObject {
 export class K8sObject implements IK8sObject {
 
     static build(params: IK8sObject): K8sObject {
-        const meta = this.prototype.decodeObjectMetadata(params.metadata);
         return new K8sObject(
-            meta,
+            params.metadata,
             params.spec,
             params.status,
         );
@@ -78,14 +76,14 @@ export class K8sObject implements IK8sObject {
     public getLabels(): Labels | undefined {
         return this.metadata?.labels;
     };
+    public getCreatedAt(): Date | undefined {
+        const timestamp = this.metadata?.creationTimestamp
+        return timestamp ? new Date(timestamp) : undefined
+    }
 
-    public decodeObjectMetadata(metadataToDecode: unknown): k8s.V1ObjectMeta | undefined {
-        if(typeof metadataToDecode === 'undefined') return metadataToDecode;
-        return pipe(V1ObjectMetaGuard.decode(metadataToDecode),
-            fold(
-                () => { throw new Error('Error decoding V1ObjectMeta') },
-                content => content,
-            ));
+    public getAge(): number | undefined {
+        const createdAt = this.getCreatedAt();
+        return createdAt ? Date.now() - createdAt.getSeconds() : undefined;
     }
 
     constructor(
@@ -94,9 +92,7 @@ export class K8sObject implements IK8sObject {
         public status?: K8sStatus,
     ) {
         try {
-            if (typeof metadata === 'undefined') this.metadata = metadata;
-            else
-                this.metadata = this.decodeObjectMetadata(metadata);
+            this.metadata = decodeMetadata(metadata);
         } catch (e) {
             throw e.message;
         }

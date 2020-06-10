@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig, V1ObjectMeta, V1ListMeta } from '@kubernetes/client-node';
+import { KubeConfig, V1ObjectMeta, V1ListMeta, V1PodStatus } from '@kubernetes/client-node';
 import { Labels } from '../K8sObject/models'
-import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap } from './utils'
+import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject } from './utils'
+import { loadFixture } from './testUtils';
 
+const KUBE_METADATA = loadFixture('utils', 'V1ObjectMeta.json');
 describe('Util functions general testing', () => {
     describe('isConfigEmpty works properly', () => {
         it('isConfigEmpty returns true when KubeConfig is empty', () => {
@@ -50,4 +52,10 @@ describe('Util functions general testing', () => {
             expect(getKeysFromTypeMap(V1ListMeta.getAttributeTypeMap())).toEqual(V1ListMetaKeys);
         })
     });
+    describe('tests isKubeObject', () => {
+        it('returns the correct boolean value', () => {
+            expect(isKubeObject(KUBE_METADATA, V1ObjectMeta)).toBeTruthy();
+            expect(isKubeObject(KUBE_METADATA, V1PodStatus)).toBeFalsy();
+        })
+    })
 })

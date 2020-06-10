@@ -15,6 +15,7 @@
  */
 import { KubeConfig } from '@kubernetes/client-node'
 import { Labels } from '../K8sObject/models'
+// import { Type } from 'io-ts';
 
 export const isConfigEmpty = (kc: KubeConfig) =>
     (kc.contexts?.length || kc.clusters?.length || kc.users?.length) ? false : true;
@@ -39,4 +40,29 @@ export const getKeysFromTypeMap = (input: TypeMap[]): Array<string> => {
         keys.push(typeMap.name);
     });
     return keys;
+}
+
+interface IKubeObject {
+    discriminator: string | undefined;
+    attributeTypeMap: Array<{
+        name: string;
+        baseName: string;
+        type: string;
+    }>
+    getAttributeTypeMap: () => {
+        name: string;
+        baseName: string;
+        type: string;
+    }[];
+}
+export const getKeysFromK8sObject = (input: IKubeObject): Array<string> => {
+    return getKeysFromTypeMap(input.getAttributeTypeMap());
+}
+
+export const isKubeObject = (input: unknown, kubeObject: IKubeObject) => {
+    if (!(input instanceof Object))
+        return false;
+    const V1ObjectMetaKeys = getKeysFromTypeMap(kubeObject.getAttributeTypeMap());
+    const inputKeys = Object.keys(input);
+    return inputKeys.length ? inputKeys.every(key => V1ObjectMetaKeys.includes(key)) : false
 }

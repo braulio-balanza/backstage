@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { V1ObjectMeta, V1PodSpec, V1PodStatus, V1Container, V1ListMeta } from '@kubernetes/client-node'
-import { K8sObject, V1ObjectMetaGuard as ObjectMetaTypeGuard } from './models';
+import { K8sObject, V1ObjectMetaGuard, Labels } from './models';
 import { loadFixture } from '../utils/testUtils'
 
 const KUBE_META_OBJECT = loadFixture('K8sObject', 'V1ObjectMeta.json');
@@ -27,13 +27,34 @@ describe('test K8sObject', () => {
             expect(K8sObject.build(podLikeObjecy)).toBeInstanceOf(K8sObject);
         });
     })
+    describe('K8sObject methods', () => {
+        const testK8sObject = new K8sObject();
+        testK8sObject.metadata = KUBE_META_OBJECT;
+        it('returns the date created at', () => {
+            const createdAt: Date | undefined = testK8sObject.getCreatedAt();
+            expect(createdAt).toEqual(new Date('2020-04-28T22:32:45Z'));
+        });
+        it('returns the pods age', () => {
+            const age: number | undefined = testK8sObject.getAge();
+            if (age) {
+                expect(typeof age).toEqual('number')
+                expect(new Date(age)).toBeInstanceOf(Date);
+            }
+            else
+                throw Error('test pod did not return date');
+        })
+        it('gets pod labels', () => {
+            const podLabels: Labels = { "app": "hello-node", "pod-template-hash": "57c6f5dbf6" };
+            expect(testK8sObject.getLabels()).toEqual(podLabels);
+        })
+    })
     describe('test object meta typeguard', () => {
         it('decodes an object meta string', () => {
-            expect(ObjectMetaTypeGuard.is(KUBE_META_OBJECT)).toBeTruthy();
+            expect(V1ObjectMetaGuard.is(KUBE_META_OBJECT)).toBeTruthy();
         })
         it('rejects an object that isn`t a V1ObjectMeta', () => {
             const wrongObject: V1ListMeta = { 'remainingItemCount': 0, 'resourceVersion': 'test', 'selfLink': 'test' };
-            expect(ObjectMetaTypeGuard.is(wrongObject)).toEqual(false);
+            expect(V1ObjectMetaGuard.is(wrongObject)).toEqual(false);
         })
     })
 });
