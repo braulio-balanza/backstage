@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import { V1Pod } from '@kubernetes/client-node'
-import { Pod } from './models'
+import { Pod, PodGuard } from './models'
 import { getAllNamespacedPods, getNamespacedPods, getNamespacedPod } from './methods'
+
 import { loadFixture } from '../utils/testUtils'
 /* eslint-disable @typescript-eslint/camelcase*/
 import { Client1_13, ApiRoot } from 'kubernetes-client';
@@ -50,12 +51,9 @@ describe('tests pod model', () => {
     const client: ApiRoot = new Client1_13({});;
     describe('pod getting methods', () => {
         it('gets pods from all namespaces', async () => {
-
             setUpPodMethod();
-            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-            const expectedResult: Pod[] = Pod.buildFromV1PodJSONArray(podsRaw);
             const actualResult: Pod[] = await getAllNamespacedPods(client);
-            expect(JSON.stringify(actualResult)).toEqual(JSON.stringify(expectedResult));
+            actualResult.forEach(pod => expect(PodGuard.is(pod)).toEqual(true))
         })
         it('gets pods for a namespace', async () => {
             setUpPodMethod();

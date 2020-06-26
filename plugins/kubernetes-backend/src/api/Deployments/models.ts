@@ -14,3 +14,16 @@
  * limitations under the License.
  */
 
+// import { Type, type, unknown } from 'io-ts';
+// import { V1DeploymentSpec, V1DeploymentStatus } from '@kubernetes/client-node';
+// import { isKubeObject } from '../utils/utils'
+
+// const V1DeploymentSpecGuard = new Type<
+//     V1DeploymentSpec,
+//     string,
+//     unknown
+//     >(
+//         'V1DeploymentSpec',
+//         (input: unknown): input is V1DeploymentSpec => isKubeObject(input, V1DeploymentSpec),
+//         (input: unknown) => { },
+//         () => { })

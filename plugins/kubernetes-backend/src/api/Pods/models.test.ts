@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { loadFixture } from '../utils/testUtils'
-import { Pod, PodOverview, decodePodSpec, decodePodStatus } from './models'
+import { Pod, PodOverview, decodePodSpec, decodePodStatus, decodePod } from './models'
 import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodSpec, V1PodStatus } from '@kubernetes/client-node'
 
 import {
@@ -28,8 +28,6 @@ describe(`tests model's methods work properly`, () => {
     describe(`builds pod`, () => {
         it(" builds pod from V1Pod", () => {
             expect(typeof testPod.name).toEqual("string");
-            expect(typeof testPod.kind).toEqual("string");
-            expect(typeof testPod.apiVersion).toEqual("string");
             expect(CustomMeta.is(testPod.metadata)).toBe(true);
             expect(testPod.spec).toBeInstanceOf(Object);
             expect(testPod.status).toBeInstanceOf(Object);
@@ -37,13 +35,11 @@ describe(`tests model's methods work properly`, () => {
         it("Allows for null vallues", () => {
             const emptyPod: Pod = Pod.build({ name: "foo" });
             expect(emptyPod.name).toMatchInlineSnapshot(`"foo"`);
-            expect(emptyPod.kind).toBeUndefined();
-            expect(emptyPod.apiVersion).toBeUndefined();
             expect(emptyPod.metadata).toBeUndefined();
             expect(emptyPod.spec).toBeUndefined();
             expect(emptyPod.status).toBeUndefined();
         })
-        it("builds JSON from Pod", () => {
+        it("builds Pod from JSON", () => {
             const testPodFromV1: Pod = Pod.buildFromV1PodJSON(v1Pod);
             expect(testPodFromV1.buildV1PodJSON()).toEqual(v1Pod);
         })
@@ -74,7 +70,7 @@ describe(`tests model's methods work properly`, () => {
         })
         it('returns the total number of container restarts', () => {
             const containerRestarts: number = testPod.getContainersRestarts();
-            expect(containerRestarts).toEqual(8);
+            expect(containerRestarts).toEqual(14);
         })
 
         it('returns a pod IP', () => {
@@ -98,7 +94,7 @@ describe(`tests model's methods work properly`, () => {
             const toCompare: PodOverview = {
                 name: 'hello-node-57c6f5dbf6-v2txn',
                 containersReady: '1/1',
-                restarts: 8,
+                restarts: 14,
                 age: 0,
                 ip: '172.17.0.3',
                 node: 'minikube',
@@ -134,6 +130,14 @@ describe(`tests model's methods work properly`, () => {
             });
             it('gives error if object not a V1PodStatus', () => {
                 expect(() => decodePodStatus(spec)).toThrowError('Error decoding V1PodStatus');
+            })
+        });
+        describe('tests the V1Pod type guard', () => {
+            it('returns the Pod as a V1Pod', () => {
+                expect(decodePod(testPod)).toBeInstanceOf(V1Pod);
+            });
+            it('gives error if object not a V1PodStatus', () => {
+                expect(() => decodePod(spec)).toThrowError('Error decoding V1Pod');
             })
         });
     });

@@ -25,8 +25,12 @@ export interface IGetAllNamespacedPods {
 
 export const getAllNamespacedPods = async (client: ApiRoot, options?: IGetAllNamespacedPods): Promise<Pod[]> => {
     try {
-        const { body: { items } } = await client.api.v1.pods.get({ qs: { labelSelector: stringifyLabels(options?.labels) } });
-        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
+        const { body } = await client.api.v1.pods.get({ qs: { labelSelector: stringifyLabels(options?.labels) } });
+        const pods: Pod[] = body.items.map((pod: V1Pod) => {
+            pod.kind = 'Pod';
+            pod.apiVersion = body.apiVersion;
+            return Pod.buildFromV1PodJSON(pod)
+        });
         return pods;
     } catch (error) {
         throw error;
@@ -39,11 +43,11 @@ export interface IGetNamesacedPods {
 }
 export const getNamespacedPods = async (client: ApiRoot, options: IGetNamesacedPods): Promise<Pod[]> => {
     try {
-        const { body: { items } } = await client.api.v1.
+        const { body } = await client.api.v1.
             namespaces(options.namespace).
             pods.
             get({ qs: { labelSelector: stringifyLabels(options?.labels) } });
-        const pods: Pod[] = items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
+        const pods: Pod[] = body.items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
         return pods;
     } catch (error) {
         throw error;

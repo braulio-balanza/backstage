@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// import { loadFixture } from '../utils/testUtils'
 
-it('dummy', () => {
-    expect(true).toBeTruthy();
-});
+// const { body } =
+
+describe('tests Deployment model', () => {
+    describe('tests typeguards for deployment', () => {
+        it('dummy', () => expect(true).toBeTruthy())
+    })
+})

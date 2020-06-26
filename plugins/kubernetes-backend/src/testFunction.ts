@@ -59,10 +59,11 @@ export const testFunction = async () => {
     // const testValue = await k8sApi.listNode();
     // const testValue: Pod[] = await getAllNamespacedPods(kc);
     // const testValue = await k8sApi.readNamespacedPod("event-exporter-v0.2.5-599d65f456-nxn6k", "kube-system");
-    return { response: await client.api.v1.pods.get()/* await client.api.v1.pods.get()*/ };
+    const response = await client.api.v1.pods.get();
+    return response
+};
     // } catch (e) {
     // return { response: e.message }
     // }
     // const testValue = getClusters(kc);
     // console.log(testValue.body.items[0]);
-};

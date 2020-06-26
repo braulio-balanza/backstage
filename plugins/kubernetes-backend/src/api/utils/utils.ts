@@ -66,3 +66,12 @@ export const isKubeObject = (input: unknown, kubeObject: IKubeObject) => {
     const inputKeys = Object.keys(input);
     return inputKeys.length ? inputKeys.every(key => V1ObjectMetaKeys.includes(key)) : false
 }
+
+// Runtime O(ic)
+export const isPluginObject = (input: unknown, comparison: unknown) => {
+    if (!(input instanceof Object) || !(comparison instanceof Object))
+        return false;
+    const inputKeys = Object.keys(input);
+    const comparisonKeys = Object.keys(comparison)
+    return inputKeys.every(key => comparisonKeys.includes(key))
+}
