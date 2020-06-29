@@ -81,14 +81,19 @@ export const isPluginObject = (input: unknown, comparison: unknown) => {
     return inputKeys.every(key => comparisonKeys.includes(key))
 }
 
-// Need to find way of copying a generic object with its signature, currently just copying as 'Object'
-export const decodeKubeObject = <T>(input: unknown, objectToCompare: IKubeObject, context: Context, errorMessage?: string): Either<Errors, T> => {
-    const content: T = <T>input;
-    return isKubeObject(input, objectToCompare)
-        ? success(content)
-        : failure(input, context, errorMessage)
+// Mehtod used by typeguard.
+export const decodeKubeObject = <T>(
+    input: unknown,
+    objectToCompare: IKubeObject,
+    context: Context,
+    errorMessage?: string): Either<Errors, T> => {
 
+    const Template: any = objectToCompare
+    return isKubeObject(input, objectToCompare)
+        ? success(Object.assign(new Template, input))
+        : failure(input, context, errorMessage)
 }
+
 interface IGuard {
     decode: (input: any) => Either<Errors, any>
 }

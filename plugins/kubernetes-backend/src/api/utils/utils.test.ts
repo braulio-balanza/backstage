@@ -19,7 +19,8 @@ import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMa
 import { V1PodSpecGuard } from '../Pods/typeGuards'
 import { loadFixture } from './testUtils';
 import { Errors } from 'io-ts';
-import { right, left } from 'fp-ts/lib/Either';
+import { left, fold } from 'fp-ts/lib/Either';
+import { pipe } from 'fp-ts/lib/pipeable';
 
 const KUBE_METADATA = loadFixture('utils', 'V1ObjectMeta.json');
 const POD_SPEC = loadFixture('utils', 'V1PodSpec.json');
@@ -70,7 +71,8 @@ describe('Util functions general testing', () => {
     })
     describe('tests decodeKubeObject', () => {
         it('decodes object and returns Either<Errors, Object>', () => {
-            expect(decodeKubeObject<V1PodSpec>(POD_SPEC, V1PodSpec, [])).toStrictEqual(right(POD_SPEC))
+            const spec = decodeKubeObject<V1PodSpec>(POD_SPEC, V1PodSpec, []);
+            expect(pipe(spec, fold(() => { }, content => content))).toBeInstanceOf(V1PodSpec)
             const errors: Errors = [{ "context": [], "message": undefined, "value": POD_SPEC }]
             expect(decodeKubeObject<V1PodStatus>(POD_SPEC, V1PodStatus, [])).toStrictEqual(left(errors))
         })
