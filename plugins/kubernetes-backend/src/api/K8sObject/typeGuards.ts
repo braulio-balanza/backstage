@@ -16,7 +16,7 @@
 
 import { V1ObjectMeta } from '@kubernetes/client-node';
 import { Type, Context, failure, success } from 'io-ts/lib'
-import { isKubeObject, decodeObject } from '../utils/utils';
+import { isKubeObject, decodeResultHandler } from '../utils/utils';
 
 export const V1ObjectMetaGuard = new Type<
     V1ObjectMeta,
@@ -32,4 +32,4 @@ export const V1ObjectMetaGuard = new Type<
             : failure(input, context),
     (meta: V1ObjectMeta): string => JSON.stringify(meta),
 )
-export const decodeMetadata = (input: unknown): V1ObjectMeta | undefined => decodeObject(input, V1ObjectMetaGuard)
+export const decodeMetadata = (input: unknown): V1ObjectMeta | undefined => decodeResultHandler(input, V1ObjectMetaGuard)

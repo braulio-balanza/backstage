@@ -15,7 +15,7 @@
  */
 import { KubeConfig } from '@kubernetes/client-node';
 import { Labels } from '../K8sObject/models';
-import { Errors } from 'io-ts';
+import { Errors, success, failure, Context } from 'io-ts';
 import { Either, fold } from 'fp-ts/lib/Either';
 import { pipe } from 'fp-ts/lib/pipeable';
 
@@ -81,11 +81,19 @@ export const isPluginObject = (input: unknown, comparison: unknown) => {
     return inputKeys.every(key => comparisonKeys.includes(key))
 }
 
+// Need to find way of copying a generic object with its signature, currently just copying as 'Object'
+export const decodeKubeObject = <T>(input: unknown, objectToCompare: IKubeObject, context: Context, errorMessage?: string): Either<Errors, T> => {
+    const content: T = <T>input;
+    return isKubeObject(input, objectToCompare)
+        ? success(content)
+        : failure(input, context, errorMessage)
+
+}
 interface IGuard {
     decode: (input: any) => Either<Errors, any>
 }
 
-export const decodeObject = <ObjectType>(input: unknown, guard: IGuard): ObjectType | undefined => {
+export const decodeResultHandler = <ObjectType>(input: unknown, guard: IGuard): ObjectType | undefined => {
     return input
         ? pipe(guard.decode(input),
             fold(

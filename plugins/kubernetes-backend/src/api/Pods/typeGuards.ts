@@ -15,7 +15,7 @@
  */
 import { V1Pod, V1PodSpec, V1PodStatus } from "@kubernetes/client-node";
 import { Type, success, failure, Context } from "io-ts/lib";
-import { isKubeObject, isPluginObject, decodeObject } from '../utils/utils';
+import { isKubeObject, isPluginObject, decodeResultHandler } from '../utils/utils';
 import { Pod } from './models'
 
 export const V1PodStatusGuard = new Type<
@@ -56,7 +56,7 @@ export const PodGuard = new Type<
         : failure(input, context, 'Error decoding V1PodSpec'),
     (pod: V1Pod) => JSON.stringify(pod),
 )
-export const decodePodStatus = (input: unknown): V1PodStatus | undefined => decodeObject(input, V1PodStatusGuard)
-export const decodePodSpec = (input: unknown): V1PodSpec | undefined => decodeObject(input, V1PodSpecGuard);
+export const decodePodStatus = (input: unknown): V1PodStatus | undefined => decodeResultHandler(input, V1PodStatusGuard)
+export const decodePodSpec = (input: unknown): V1PodSpec | undefined => decodeResultHandler(input, V1PodSpecGuard);
 // Possible circular dependency? PodGuard Needs Pod defined bellow.
-export const decodePod = (input: unknown): V1Pod | undefined => decodeObject(input, PodGuard)
+export const decodePod = (input: unknown): V1Pod | undefined => decodeResultHandler(input, PodGuard)

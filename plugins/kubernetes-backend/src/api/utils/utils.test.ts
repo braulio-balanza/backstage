@@ -15,9 +15,11 @@
  */
 import { KubeConfig, V1ObjectMeta, V1ListMeta, V1PodStatus, V1PodSpec } from '@kubernetes/client-node';
 import { Labels } from '../K8sObject/models'
-import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject, decodeObject } from './utils'
+import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject, decodeResultHandler, decodeKubeObject } from './utils'
 import { V1PodSpecGuard } from '../Pods/typeGuards'
 import { loadFixture } from './testUtils';
+import { Errors } from 'io-ts';
+import { right, left } from 'fp-ts/lib/Either';
 
 const KUBE_METADATA = loadFixture('utils', 'V1ObjectMeta.json');
 const POD_SPEC = loadFixture('utils', 'V1PodSpec.json');
@@ -60,10 +62,17 @@ describe('Util functions general testing', () => {
             expect(isKubeObject(KUBE_METADATA, V1PodStatus)).toBeFalsy();
         })
     })
-    describe('tests decodeObject', () => {
+    describe('tests decodeResultHandler', () => {
         it('decodes an input and returns a typesafe object', () => {
-            const testSpec = decodeObject(POD_SPEC, V1PodSpecGuard);
+            const testSpec = decodeResultHandler(POD_SPEC, V1PodSpecGuard);
             expect(testSpec).toBeInstanceOf(V1PodSpec);
+        })
+    })
+    describe('tests decodeKubeObject', () => {
+        it('decodes object and returns Either<Errors, Object>', () => {
+            expect(decodeKubeObject<V1PodSpec>(POD_SPEC, V1PodSpec, [])).toStrictEqual(right(POD_SPEC))
+            const errors: Errors = [{ "context": [], "message": undefined, "value": POD_SPEC }]
+            expect(decodeKubeObject<V1PodStatus>(POD_SPEC, V1PodStatus, [])).toStrictEqual(left(errors))
         })
     })
 
