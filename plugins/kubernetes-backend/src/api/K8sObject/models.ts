@@ -15,10 +15,7 @@
  */
 
 import * as k8s from '@kubernetes/client-node'
-import { Type, Context, failure, success } from 'io-ts/lib'
-import { fold } from 'fp-ts/lib/Either'
-import { pipe } from 'fp-ts/lib/pipeable'
-import { isKubeObject } from '../utils/utils'
+import { decodeMetadata } from "./typeGuards";
 
 export type Labels = { [key: string]: string };
 
@@ -29,33 +26,6 @@ export type K8sStatus = k8s.V1PodStatus | k8s.V1NodeStatus | k8s.V1DeploymentSta
 export type meta = k8s.V1ObjectMeta | k8s.V1ListMeta;
 
 
-
-export const V1ObjectMetaGuard = new Type<
-    k8s.V1ObjectMeta,
-    string,
-    unknown
->(
-    'V1ObjectMeta',
-    (unknown: unknown): unknown is k8s.V1ObjectMeta => {
-        return isKubeObject(unknown, k8s.V1ObjectMeta);
-    },
-    (input: unknown, context: Context) => {
-        return isKubeObject(input, k8s.V1ObjectMeta)
-            ? success(Object.assign(new k8s.V1ObjectMeta, input))
-            : failure(input, context);
-    },
-    (meta: k8s.V1ObjectMeta): string => {
-        return JSON.stringify(meta);
-    },
-)
-const decodeMetadata = (metadataToDecode: unknown): k8s.V1ObjectMeta | undefined => {
-    if (typeof metadataToDecode === 'undefined') return metadataToDecode;
-    return pipe(V1ObjectMetaGuard.decode(metadataToDecode),
-        fold(
-            () => { throw new Error('Error decoding V1ObjectMeta') },
-            content => content,
-        ));
-}
 
 export interface IK8sObject {
     metadata?: k8s.V1ObjectMeta;
@@ -91,10 +61,6 @@ export class K8sObject implements IK8sObject {
         public spec?: K8sSpec,
         public status?: K8sStatus,
     ) {
-        try {
-            this.metadata = decodeMetadata(metadata);
-        } catch (e) {
-            throw e.message;
-        }
+        this.metadata = decodeMetadata(metadata);
     }
 }

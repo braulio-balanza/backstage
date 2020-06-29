@@ -18,8 +18,8 @@ import { Pod, PodOverview } from './models'
 import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodStatus } from '@kubernetes/client-node'
 
 import {
-    V1ObjectMetaGuard as CustomMeta,
-} from 'api/K8sObject/models';
+    V1ObjectMetaGuard
+} from 'api/K8sObject/typeGuards';
 const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
 
 describe(`tests model's methods work properly`, () => {
@@ -28,7 +28,7 @@ describe(`tests model's methods work properly`, () => {
     describe(`builds pod`, () => {
         it(" builds pod from V1Pod", () => {
             expect(typeof testPod.name).toEqual("string");
-            expect(CustomMeta.is(testPod.metadata)).toBe(true);
+            expect(V1ObjectMetaGuard.is(testPod.metadata)).toBe(true);
             expect(testPod.spec).toBeInstanceOf(Object);
             expect(testPod.status).toBeInstanceOf(Object);
         });
