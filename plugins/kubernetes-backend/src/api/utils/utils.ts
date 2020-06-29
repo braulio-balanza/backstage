@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig } from '@kubernetes/client-node'
-import { Labels } from '../K8sObject/models'
+import { KubeConfig } from '@kubernetes/client-node';
+import { Labels } from '../K8sObject/models';
+import { Errors } from 'io-ts';
+import { Either, fold } from 'fp-ts/lib/Either';
+import { pipe } from 'fp-ts/lib/pipeable';
+
 // import { Type } from 'io-ts';
 
 export const isConfigEmpty = (kc: KubeConfig) =>
@@ -59,6 +63,7 @@ export const getKeysFromK8sObject = (input: IKubeObject): Array<string> => {
     return getKeysFromTypeMap(input.getAttributeTypeMap());
 }
 
+// Runtime O(i*k)
 export const isKubeObject = (input: unknown, kubeObject: IKubeObject) => {
     if (!(input instanceof Object))
         return false;
@@ -67,7 +72,7 @@ export const isKubeObject = (input: unknown, kubeObject: IKubeObject) => {
     return inputKeys.length ? inputKeys.every(key => V1ObjectMetaKeys.includes(key)) : false
 }
 
-// Runtime O(ic)
+// Runtime O(i*c)
 export const isPluginObject = (input: unknown, comparison: unknown) => {
     if (!(input instanceof Object) || !(comparison instanceof Object))
         return false;
@@ -75,3 +80,20 @@ export const isPluginObject = (input: unknown, comparison: unknown) => {
     const comparisonKeys = Object.keys(comparison)
     return inputKeys.every(key => comparisonKeys.includes(key))
 }
+
+interface IGuard {
+    decode: (input: any) => Either<Errors, any>
+}
+
+export const decodeObject = <ObjectType>(input: unknown, guard: IGuard): ObjectType | undefined => {
+    return input
+        ? pipe(guard.decode(input),
+            fold(
+                errors => {
+                    throw new Error(errors.map(error => `${error.message}`).join('\n'))
+                },
+                content => content
+            ))
+        : undefined;
+}
+

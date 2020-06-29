@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { V1Pod } from '@kubernetes/client-node'
-import { Pod, PodGuard } from './models'
+import { Pod } from './models'
+import { PodGuard } from './typeGuards'
 import { getAllNamespacedPods, getNamespacedPods, getNamespacedPod } from './methods'
 
 import { loadFixture } from '../utils/testUtils'

@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { KubeConfig, V1ObjectMeta, V1ListMeta, V1PodStatus } from '@kubernetes/client-node';
+import { KubeConfig, V1ObjectMeta, V1ListMeta, V1PodStatus, V1PodSpec } from '@kubernetes/client-node';
 import { Labels } from '../K8sObject/models'
-import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject } from './utils'
+import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject, decodeObject } from './utils'
+import { V1PodSpecGuard } from '../Pods/typeGuards'
 import { loadFixture } from './testUtils';
 
 const KUBE_METADATA = loadFixture('utils', 'V1ObjectMeta.json');
+const POD_SPEC = loadFixture('utils', 'V1PodSpec.json');
 describe('Util functions general testing', () => {
     describe('isConfigEmpty works properly', () => {
         it('isConfigEmpty returns true when KubeConfig is empty', () => {
@@ -58,4 +60,11 @@ describe('Util functions general testing', () => {
             expect(isKubeObject(KUBE_METADATA, V1PodStatus)).toBeFalsy();
         })
     })
+    describe('tests decodeObject', () => {
+        it('decodes an input and returns a typesafe object', () => {
+            const testSpec = decodeObject(POD_SPEC, V1PodSpecGuard);
+            expect(testSpec).toBeInstanceOf(V1PodSpec);
+        })
+    })
+
 })

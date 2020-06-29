@@ -1,0 +1,52 @@
+{
+    "volumes": [
+        {
+            "name": "default-token-sjtjd",
+            "secret": {
+                "secretName": "default-token-sjtjd",
+                "defaultMode": 420
+            }
+        }
+    ],
+    "containers": [
+        {
+            "name": "kubernetes",
+            "image": "test/kubernetes:1.0",
+            "resources": {},
+            "volumeMounts": [
+                {
+                    "name": "default-token-sjtjd",
+                    "readOnly": true,
+                    "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+                }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "IfNotPresent"
+        }
+    ],
+    "restartPolicy": "Always",
+    "terminationGracePeriodSeconds": 30,
+    "dnsPolicy": "ClusterFirst",
+    "serviceAccountName": "default",
+    "serviceAccount": "default",
+    "nodeName": "minikube",
+    "securityContext": {},
+    "schedulerName": "default-scheduler",
+    "tolerations": [
+        {
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+        },
+        {
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "effect": "NoExecute",
+            "tolerationSeconds": 300
+        }
+    ],
+    "priority": 0,
+    "enableServiceLinks": true
+}

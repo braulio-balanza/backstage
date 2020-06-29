@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { loadFixture } from '../utils/testUtils'
-import { Pod, PodOverview, decodePodSpec, decodePodStatus, decodePod } from './models'
-import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodSpec, V1PodStatus } from '@kubernetes/client-node'
+import { Pod, PodOverview } from './models'
+import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodStatus } from '@kubernetes/client-node'
 
 import {
     V1ObjectMetaGuard as CustomMeta,
@@ -113,32 +113,5 @@ describe(`tests model's methods work properly`, () => {
     describe('tests K8sObject methods', () => {
 
     });
-    describe('tests typeguards', () => {
-        const status: unknown = testPod.getStatus();
-        const spec: unknown = testPod.getSpec();
-        describe('tests the V1PodSpec type guard', () => {
-            it('returns the spec as a V1PodSpec', () => {
-                expect(spec).toBeInstanceOf(V1PodSpec);
-            });
-            it('gives error if object not a V1PodSpec', () => {
-                expect(() => decodePodSpec(status)).toThrowError('Error decoding V1PodSpec');
-            })
-        });
-        describe('tests the V1PodStatus type guard', () => {
-            it('returns the status as a V1PodStatus', () => {
-                expect(status).toBeInstanceOf(V1PodStatus);
-            });
-            it('gives error if object not a V1PodStatus', () => {
-                expect(() => decodePodStatus(spec)).toThrowError('Error decoding V1PodStatus');
-            })
-        });
-        describe('tests the V1Pod type guard', () => {
-            it('returns the Pod as a V1Pod', () => {
-                expect(decodePod(testPod)).toBeInstanceOf(V1Pod);
-            });
-            it('gives error if object not a V1PodStatus', () => {
-                expect(() => decodePod(spec)).toThrowError('Error decoding V1Pod');
-            })
-        });
-    });
+
 })

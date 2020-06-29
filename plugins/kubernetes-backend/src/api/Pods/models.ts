@@ -16,11 +16,8 @@
 
 import { V1Pod, V1PodSpec, V1PodStatus, V1ContainerStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
 import { IK8sObject, K8sObject } from "../K8sObject/models";
-import { Type, success, failure, Context } from "io-ts/lib";
-import { isKubeObject, isPluginObject } from '../utils/utils';
-import { pipe } from "fp-ts/lib/pipeable";
-import { fold } from 'fp-ts/lib/Either'
-// import YAML from 'yaml';
+import { decodePodSpec, decodePodStatus } from './typeGuards'
+
 
 export interface PodOverview {
     name?: string,
@@ -40,52 +37,6 @@ export interface IPod extends IK8sObject {
     spec?: V1PodSpec;
     status?: V1PodStatus;
 }
-
-export const V1PodStatusGuard = new Type<
-    V1PodStatus,
-    string,
-    unknown
->(
-    'V1PodStatus',
-    (input: unknown): input is V1PodStatus => isKubeObject(input, V1PodStatus),
-    (input: unknown, context: Context) =>
-        isKubeObject(input, V1PodStatus)
-            ? success(Object.assign(new V1PodStatus, input))
-            : failure(input, context, "Error decoding V1PodStatus"),
-    (status: V1PodStatus): string => JSON.stringify(status),
-)
-export const decodePodStatus = (input: unknown): V1PodStatus | undefined =>
-    input
-        ? pipe(V1PodStatusGuard.decode(input),
-            fold(
-                errors => { errors.forEach(error => { throw new Error(error.message) }); return undefined },
-                status => status
-            ))
-        : undefined;
-
-
-export const V1PodSpecGuard = new Type<
-    V1PodSpec,
-    string,
-    unknown
->(
-    'V1PodSpec',
-    (input: unknown): input is V1PodSpec => isKubeObject(input, V1PodSpec),
-    (input: unknown, context: Context) => isKubeObject(input, V1PodSpec)
-        ? success(Object.assign(new V1PodSpec, input))
-        : failure(input, context, 'Error decoding V1PodSpec'),
-    (spec: V1PodSpec) => JSON.stringify(spec),
-)
-
-export const decodePodSpec = (input: unknown): V1PodSpec | undefined =>
-    input
-        ? pipe(V1PodSpecGuard.decode(input),
-            fold(
-                errors => { errors.forEach(error => { throw new Error(error.message) }); return undefined },
-                spec => spec
-            ))
-        : undefined;
-
 
 
 export class Pod extends K8sObject {
@@ -200,24 +151,3 @@ export class Pod extends K8sObject {
     };
 
 }
-
-export const PodGuard = new Type<
-    V1Pod,
-    string,
-    unknown
->(
-    'V1Pod',
-    (input: unknown): input is V1Pod => isPluginObject(input, new Pod),
-    (input: unknown, context) => isPluginObject(input, new Pod)
-        ? success(Object.assign(new V1Pod, input))
-        : failure(input, context, 'Error decoding V1PodSpec'),
-    (pod: V1Pod) => JSON.stringify(pod),
-)
-export const decodePod = (input: unknown): V1Pod | undefined =>
-    input
-        ? pipe(PodGuard.decode(input),
-            fold(
-                errors => { errors.forEach(error => { throw new Error(error.message) }); return undefined },
-                status => status
-            ))
-        : undefined;
