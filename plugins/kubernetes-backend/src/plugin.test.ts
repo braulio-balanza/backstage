@@ -15,7 +15,7 @@
  */
 
 describe('test', () => {
-  it('unbreaks the test runner', () => {
-    expect(true).toBeTruthy();
+  it('dummy', () => {
+    expect(true).toBe(true);
   });
 });

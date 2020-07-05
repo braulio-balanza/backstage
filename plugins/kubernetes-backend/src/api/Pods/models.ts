@@ -41,7 +41,7 @@ export interface IPod extends IK8sObject {
 
 export class Pod extends K8sObject {
 
-    static build(params: IPod): Pod {
+    static build = (params: IPod): Pod => {
         return new Pod(
             params.name,
             params.kind,
@@ -52,19 +52,19 @@ export class Pod extends K8sObject {
         );
     }
 
-    static buildFromV1PodJSON(v1Pod: V1Pod): Pod {
+    static buildFromV1PodJSON = (v1Pod: V1Pod): Pod => {
         const { kind, apiVersion, metadata, spec, status } = v1Pod;
         const name: string = metadata?.name ? metadata.name : "";
         return Pod.build({ name, kind, apiVersion, metadata, spec, status });
     }
 
-    static buildFromV1PodJSONArray(v1PodList: V1Pod[]): Pod[] {
+    static buildFromV1PodJSONArray = (v1PodList: V1Pod[]): Pod[] => {
         const pods: Pod[] = new Array<Pod>();
         v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1PodJSON(pod)));
         return pods;
     }
 
-    public buildV1PodJSON(): V1Pod {
+    public buildV1PodJSON = (): V1Pod => {
         return {
             kind: this.kind,
             apiVersion: this.apiVersion,
@@ -74,22 +74,22 @@ export class Pod extends K8sObject {
         };
     }
 
-    public getContainers(): V1Container[] | undefined {
+    public getContainers = (): V1Container[] | undefined => {
         const spec = this.spec as V1PodSpec;
         if (spec)
             return spec.containers;
         return undefined;
     }
 
-    public getMetadata(): V1ObjectMeta | undefined {
+    public getMetadata = (): V1ObjectMeta | undefined => {
         return this.metadata ? this.metadata as V1ObjectMeta : undefined;
     }
 
-    public getSpec(): V1PodSpec | undefined {
+    public getSpec = (): V1PodSpec | undefined => {
         return this.spec ? this.spec as V1PodSpec : undefined;
     }
 
-    public getStatus(): V1PodStatus | undefined {
+    public getStatus = (): V1PodStatus | undefined => {
         return this.status ? this.status as V1PodStatus : undefined;
     }
     public getContainersStatuses = (): Array<V1ContainerStatus> | undefined => {
@@ -97,7 +97,7 @@ export class Pod extends K8sObject {
         return containerStatuses ? containerStatuses : undefined;
     };
 
-    public getContainersReady(): string {
+    public getContainersReady = (): string => {
         const containerStatuses = this.getContainersStatuses();
         let ready: number = 0;
         let total: number = 0;
@@ -109,7 +109,7 @@ export class Pod extends K8sObject {
         return `${ready}/${total}`
     }
 
-    public getContainersRestarts(): number {
+    public getContainersRestarts = (): number => {
         const containerStatuses = this.getContainersStatuses();
         let restarts: number = 0;
         if (containerStatuses)
@@ -117,16 +117,16 @@ export class Pod extends K8sObject {
         return restarts;
     }
 
-    public getPodIp(): string {
+    public getPodIp = (): string => {
         const status = this.getStatus();
         return status?.podIP ? status.podIP : '';
     };
 
-    public getNodeName(): string {
+    public getNodeName = (): string => {
         const spec = this.getSpec();
         return spec?.nodeName ? spec.nodeName : '';
     }
-    public getPodOverview(): PodOverview {
+    public getPodOverview = (): PodOverview => {
         const overview: PodOverview = {
             name: this.getMetadata()?.name,
             containersReady: this.getContainersReady(),

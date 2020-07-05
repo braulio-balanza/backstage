@@ -13,6 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-it('dummy', () => {
-    expect(true).toBe(true);
+import { loadFixture } from '../utils/testUtils'
+import { decodeDeploymentSpec, V1DeploymentSpecGuard, V1DeploymentStatusGuard, decodeDeploymentStatus } from './typeGuards'
+import { V1Deployment, V1DeploymentSpec, V1DeploymentStatus } from '@kubernetes/client-node'
+const { body: DEPLOYMENT }: { body: V1Deployment } = loadFixture('Deployments', 'deploymentResponseFixture.json');
+
+describe('tests typeguards for Deployment', () => {
+    const spec = DEPLOYMENT.spec;
+    const status = DEPLOYMENT.status;
+    describe('tests guards for V1DeploymentSpec', () => {
+        it('returns whether object is spec', () => {
+            expect(V1DeploymentSpecGuard.is(spec)).toEqual(true);
+            expect(V1DeploymentSpecGuard.is(status)).toEqual(false)
+        })
+        it('decodes a V1DeploymentSpec from JSON', () => {
+            expect(decodeDeploymentSpec(spec)).toBeInstanceOf(V1DeploymentSpec)
+        })
+        it('throws error if not a V1DeploymentSpec', () => {
+            expect(() => decodeDeploymentSpec(status)).toThrowError()
+        })
+    })
+    describe('test guards for V1DeploymentStatus', () => {
+        it('returns whether object is status', () => {
+            expect(V1DeploymentStatusGuard.is(status)).toEqual(true);
+            expect(V1DeploymentStatusGuard.is(spec)).toEqual(false);
+        })
+        it('decodes a V1DeploymentStatus from JSON', () => {
+            expect(decodeDeploymentStatus(status)).toBeInstanceOf(V1DeploymentStatus);
+        })
+        it('throws error if not a V1DeploymentStatus', () => {
+            expect(() => decodeDeploymentStatus(spec)).toThrowError()
+        })
+    })
 })

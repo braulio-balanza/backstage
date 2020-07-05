@@ -65,7 +65,7 @@ export const getKeysFromK8sObject = (input: IKubeObject): Array<string> => {
 
 // Runtime O(i*k)
 export const isKubeObject = (input: unknown, kubeObject: IKubeObject) => {
-    if (!(input instanceof Object))
+    if (!(input instanceof Object) || !kubeObject.getAttributeTypeMap)
         return false;
     const V1ObjectMetaKeys = getKeysFromTypeMap(kubeObject.getAttributeTypeMap());
     const inputKeys = Object.keys(input);
@@ -82,16 +82,19 @@ export const isPluginObject = (input: unknown, comparison: unknown) => {
 }
 
 // Mehtod used by typeguard.
-export const decodeKubeObject = <T>(
+export const decodeObject = <T>(
     input: unknown,
-    objectToCompare: IKubeObject,
+    objectToCompare: any,
     context: Context,
     errorMessage?: string): Either<Errors, T> => {
-
     const Template: any = objectToCompare
-    return isKubeObject(input, objectToCompare)
-        ? success(Object.assign(new Template, input))
-        : failure(input, context, errorMessage)
+    if (isKubeObject(input, objectToCompare)) {
+        return success(Object.assign(new Template, input))
+    }
+    if (isPluginObject(input, new Template)) {
+        return success(Object.assign(new Template, input))
+    }
+    return failure(input, context, errorMessage)
 }
 
 interface IGuard {

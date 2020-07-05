@@ -15,7 +15,7 @@
  */
 import { KubeConfig, V1ObjectMeta, V1ListMeta, V1PodStatus, V1PodSpec } from '@kubernetes/client-node';
 import { Labels } from '../K8sObject/models'
-import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject, decodeResultHandler, decodeKubeObject } from './utils'
+import { isConfigEmpty, stringifyLabels, returnUndefinedArray, getKeysFromTypeMap, isKubeObject, decodeResultHandler, decodeObject } from './utils'
 import { V1PodSpecGuard } from '../Pods/typeGuards'
 import { loadFixture } from './testUtils';
 import { Errors } from 'io-ts';
@@ -71,10 +71,10 @@ describe('Util functions general testing', () => {
     })
     describe('tests decodeKubeObject', () => {
         it('decodes object and returns Either<Errors, Object>', () => {
-            const spec = decodeKubeObject<V1PodSpec>(POD_SPEC, V1PodSpec, []);
+            const spec = decodeObject<V1PodSpec>(POD_SPEC, V1PodSpec, []);
             expect(pipe(spec, fold(() => { }, content => content))).toBeInstanceOf(V1PodSpec)
             const errors: Errors = [{ "context": [], "message": undefined, "value": POD_SPEC }]
-            expect(decodeKubeObject<V1PodStatus>(POD_SPEC, V1PodStatus, [])).toStrictEqual(left(errors))
+            expect(decodeObject<V1PodStatus>(POD_SPEC, V1PodStatus, [])).toStrictEqual(left(errors))
         })
     })
 

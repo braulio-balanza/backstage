@@ -40,12 +40,12 @@ describe('tests typeguards', () => {
             expect(() => decodePodStatus(spec)).toThrowError('Error decoding V1PodStatus');
         })
     });
-    describe('tests the V1Pod type guard', () => {
-        it('returns the Pod as a V1Pod', () => {
-            expect(decodePod(testPod)).toBeInstanceOf(V1Pod);
+    describe('tests the Pod type guard', () => {
+        it('returns the Pod as a Pod', () => {
+            expect(decodePod(testPod)).toBeInstanceOf(Pod);
         });
-        it('gives error if object not a V1PodStatus', () => {
-            expect(() => decodePod(spec)).toThrowError('Error decoding V1Pod');
+        it('gives error if object not a Pod', () => {
+            expect(() => decodePod(spec)).toThrowError('Error decoding Pod');
         })
     });
 });

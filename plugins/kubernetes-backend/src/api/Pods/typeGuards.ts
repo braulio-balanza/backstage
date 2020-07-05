@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { V1Pod, V1PodSpec, V1PodStatus } from "@kubernetes/client-node";
-import { Type, success, failure, Context } from "io-ts/lib";
-import { isKubeObject, isPluginObject, decodeResultHandler } from '../utils/utils';
+import { V1PodSpec, V1PodStatus } from "@kubernetes/client-node";
+import { Type, Context } from "io-ts/lib";
+import { isKubeObject, isPluginObject, decodeResultHandler, decodeObject } from '../utils/utils';
 import { Pod } from './models'
 
 export const V1PodStatusGuard = new Type<
@@ -25,9 +25,7 @@ export const V1PodStatusGuard = new Type<
 >(
     'V1PodStatus',
     (input: unknown): input is V1PodStatus => isKubeObject(input, V1PodStatus),
-    (input: unknown, context: Context) => isKubeObject(input, V1PodStatus)
-        ? success(Object.assign(new V1PodStatus, input))
-        : failure(input, context, "Error decoding V1PodStatus"),
+    (input: unknown, context: Context) => decodeObject(input, V1PodStatus, context, "Error decoding V1PodStatus"),
     (status: V1PodStatus): string => JSON.stringify(status),
 )
 
@@ -38,25 +36,23 @@ export const V1PodSpecGuard = new Type<
 >(
     'V1PodSpec',
     (input: unknown): input is V1PodSpec => isKubeObject(input, V1PodSpec),
-    (input: unknown, context: Context) => isKubeObject(input, V1PodSpec)
-        ? success(Object.assign(new V1PodSpec, input))
-        : failure(input, context, 'Error decoding V1PodSpec'),
+    (input: unknown, context: Context) => decodeObject(input, V1PodSpec, context, "Error decoding V1PodSpec"),
     (spec: V1PodSpec) => JSON.stringify(spec),
 )
 
 export const PodGuard = new Type<
-    V1Pod,
+    Pod,
     string,
     unknown
 >(
-    'V1Pod',
-    (input: unknown): input is V1Pod => isPluginObject(input, new Pod),
-    (input: unknown, context) => isPluginObject(input, new Pod)
-        ? success(Object.assign(new V1Pod, input))
-        : failure(input, context, 'Error decoding V1PodSpec'),
-    (pod: V1Pod) => JSON.stringify(pod),
+    'Pod',
+    (input: unknown): input is Pod => isPluginObject(input, new Pod),
+    (input: unknown, context) => decodeObject(input, Pod, context, "Error decoding Pod"),
+    (pod: Pod) => JSON.stringify(pod),
 )
+// TODO do we need a V1Pod guard?
+
 export const decodePodStatus = (input: unknown): V1PodStatus | undefined => decodeResultHandler(input, V1PodStatusGuard)
 export const decodePodSpec = (input: unknown): V1PodSpec | undefined => decodeResultHandler(input, V1PodSpecGuard);
-// Possible circular dependency? PodGuard Needs Pod defined bellow.
-export const decodePod = (input: unknown): V1Pod | undefined => decodeResultHandler(input, PodGuard)
+// Possible circular dependency? PodGuard Needs Pod defined above.
+export const decodePod = (input: unknown): Pod | undefined => decodeResultHandler(input, PodGuard)
