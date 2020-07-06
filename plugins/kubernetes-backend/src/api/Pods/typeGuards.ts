@@ -15,7 +15,7 @@
  */
 import { V1PodSpec, V1PodStatus } from "@kubernetes/client-node";
 import { Type, Context } from "io-ts/lib";
-import { isKubeObject, isPluginObject, decodeResultHandler, decodeObject } from '../utils/utils';
+import { compareObject, decodeResultHandler, decodeObject } from '../utils/utils';
 import { Pod } from './models'
 
 export const V1PodStatusGuard = new Type<
@@ -24,7 +24,7 @@ export const V1PodStatusGuard = new Type<
     unknown
 >(
     'V1PodStatus',
-    (input: unknown): input is V1PodStatus => isKubeObject(input, V1PodStatus),
+    (input: unknown): input is V1PodStatus => compareObject(input, V1PodStatus),
     (input: unknown, context: Context) => decodeObject(input, V1PodStatus, context, "Error decoding V1PodStatus"),
     (status: V1PodStatus): string => JSON.stringify(status),
 )
@@ -35,7 +35,7 @@ export const V1PodSpecGuard = new Type<
     unknown
 >(
     'V1PodSpec',
-    (input: unknown): input is V1PodSpec => isKubeObject(input, V1PodSpec),
+    (input: unknown): input is V1PodSpec => compareObject(input, V1PodSpec),
     (input: unknown, context: Context) => decodeObject(input, V1PodSpec, context, "Error decoding V1PodSpec"),
     (spec: V1PodSpec) => JSON.stringify(spec),
 )
@@ -46,7 +46,7 @@ export const PodGuard = new Type<
     unknown
 >(
     'Pod',
-    (input: unknown): input is Pod => isPluginObject(input, new Pod),
+    (input: unknown): input is Pod => compareObject(input, Pod),
     (input: unknown, context) => decodeObject(input, Pod, context, "Error decoding Pod"),
     (pod: Pod) => JSON.stringify(pod),
 )

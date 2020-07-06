@@ -22,15 +22,15 @@ import { loadFixture } from '../utils/testUtils'
 /* eslint-disable @typescript-eslint/camelcase*/
 import { Client1_13, ApiRoot } from 'kubernetes-client';
 
-const POD_FIXTURE = loadFixture('Pods', 'podResponseFixture.json');
-const POD_LIST_FIXTURE = loadFixture('Pods', 'podListResponseFixture.json');
+const POD = loadFixture('Pods', 'podResponse.json');
+const POD_LIST = loadFixture('Pods', 'podListResponse.json');
 jest.mock('kubernetes-client')
 
 const setUpPodMethod = (podMethodOverride?: Object) => {
     const mockedPodMethods = {
 
         pods: {
-            get: jest.fn().mockReturnValueOnce(POD_LIST_FIXTURE)
+            get: jest.fn().mockReturnValueOnce(POD_LIST)
         },
         ...podMethodOverride
     }
@@ -42,7 +42,7 @@ const setUpPodMethod = (podMethodOverride?: Object) => {
                 mockedPodMethods
             ),
             pods: {
-                get: jest.fn().mockReturnValueOnce(POD_LIST_FIXTURE)
+                get: jest.fn().mockReturnValueOnce(POD_LIST)
             }
         }
     }
@@ -58,8 +58,8 @@ describe('tests pod model', () => {
         })
         it('gets pods for a namespace', async () => {
             setUpPodMethod();
-            const podsRaw: V1Pod[] = POD_LIST_FIXTURE.body.items;
-            const expectedResult: Pod[] = Pod.buildFromV1PodJSONArray(podsRaw);
+            const podsRaw: V1Pod[] = POD_LIST.body.items;
+            const expectedResult: Pod[] = Pod.buildFromJSONArray(podsRaw);
             const actualResult: Pod[] = await getNamespacedPods(client, { namespace: 'default' });
             expect(JSON.stringify(actualResult)).toEqual(JSON.stringify(expectedResult));
         });
@@ -67,11 +67,11 @@ describe('tests pod model', () => {
 
             setUpPodMethod({
                 pods: jest.fn(() => ({
-                    get: jest.fn().mockReturnValueOnce(POD_FIXTURE)
+                    get: jest.fn().mockReturnValueOnce(POD)
                 })),
             });
-            const podRaw: V1Pod = POD_FIXTURE.body;
-            const expectedResult: Pod = Pod.buildFromV1PodJSON(podRaw);
+            const podRaw: V1Pod = POD.body;
+            const expectedResult: Pod = Pod.buildFromJSON(podRaw);
             const actualResult: Pod = await getNamespacedPod(client, { namespace: 'default', name: 'dummy' });
             expect(actualResult.spec).toEqual(expectedResult.spec);
             expect(actualResult.status).toEqual(expectedResult.status);

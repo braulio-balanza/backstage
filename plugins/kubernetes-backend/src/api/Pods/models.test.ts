@@ -16,51 +16,43 @@
 import { loadFixture } from '../utils/testUtils'
 import { Pod, PodOverview } from './models'
 import { V1Pod, V1Container, V1ObjectMeta, V1ContainerStatus, V1PodStatus } from '@kubernetes/client-node'
-
-import {
-    V1ObjectMetaGuard
-} from 'api/K8sObject/typeGuards';
-const { body: v1Pod }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
+import { PodGuard } from './typeGuards';
+const { body: POD }: { body: V1Pod } = loadFixture('Pods', 'podResponse.json');
+const { body: { items: POD_LIST } }: { body: { items: Array<V1Pod> } } = loadFixture('Pods', 'podListResponse.json')
 
 describe(`tests model's methods work properly`, () => {
-    const testPod: Pod = Pod.buildFromV1PodJSON(v1Pod);
+    const testPod: Pod = Pod.buildFromJSON(POD);
 
     describe(`builds pod`, () => {
         it(" builds pod from V1Pod", () => {
-            expect(typeof testPod.name).toEqual("string");
-            expect(V1ObjectMetaGuard.is(testPod.metadata)).toBe(true);
-            expect(testPod.spec).toBeInstanceOf(Object);
-            expect(testPod.status).toBeInstanceOf(Object);
+            expect(PodGuard.is(testPod)).toBe(true);
         });
         it("Allows for null vallues", () => {
-            const emptyPod: Pod = Pod.build({ name: "foo" });
-            expect(emptyPod.name).toMatchInlineSnapshot(`"foo"`);
+            const emptyPod: Pod = Pod.build({});
             expect(emptyPod.metadata).toBeUndefined();
             expect(emptyPod.spec).toBeUndefined();
             expect(emptyPod.status).toBeUndefined();
         })
         it("builds Pod from JSON", () => {
-            const testPodFromV1: Pod = Pod.buildFromV1PodJSON(v1Pod);
-            expect(testPodFromV1.buildV1PodJSON()).toEqual(v1Pod);
+            expect(testPod.buildV1PodJSON()).toEqual(POD);
         })
-        it(" Builds Pod from V1Pod with no name ", () => {
-            const noNameV1Pod = v1Pod;
-            if (noNameV1Pod.metadata) noNameV1Pod.metadata.name = undefined;
-            expect(Pod.buildFromV1PodJSON(noNameV1Pod).name).toEqual("");
-        });
+        it('builds from Pod List', () => {
+            const podList: Array<Pod> = Pod.buildFromJSONArray(POD_LIST);
+            podList.forEach(pod => expect(PodGuard.is(pod)).toEqual(true))
+        })
     });
     describe('tests pods methods', () => {
         it('returns list of containers', () => {
             const containersFromPod: V1Container[] | undefined = testPod.getContainers();
             if (containersFromPod)
-                expect(containersFromPod[0]).toBe(v1Pod.spec?.containers[0])
+                expect(containersFromPod[0]).toBe(POD.spec?.containers[0])
             else
                 throw new Error('Containers should return');
         })
         it('returns the pods container statuses', () => {
             const containerStatuses: V1ContainerStatus[] | undefined = testPod.getContainersStatuses()
             if (containerStatuses)
-                expect(containerStatuses).toEqual(v1Pod.status?.containerStatuses)
+                expect(containerStatuses).toEqual(POD.status?.containerStatuses)
             else
                 throw new Error('Containers should return');
         });

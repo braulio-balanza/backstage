@@ -16,7 +16,7 @@
 import { loadFixture } from '../utils/testUtils'
 import { decodeDeploymentSpec, V1DeploymentSpecGuard, V1DeploymentStatusGuard, decodeDeploymentStatus } from './typeGuards'
 import { V1Deployment, V1DeploymentSpec, V1DeploymentStatus } from '@kubernetes/client-node'
-const { body: DEPLOYMENT }: { body: V1Deployment } = loadFixture('Deployments', 'deploymentResponseFixture.json');
+const { body: DEPLOYMENT }: { body: V1Deployment } = loadFixture('Deployments', 'deploymentResponse.json');
 
 describe('tests typeguards for Deployment', () => {
     const spec = DEPLOYMENT.spec;

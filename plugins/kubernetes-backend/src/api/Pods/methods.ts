@@ -29,7 +29,7 @@ export const getAllNamespacedPods = async (client: ApiRoot, options?: IGetAllNam
         const pods: Pod[] = body.items.map((pod: V1Pod) => {
             pod.kind = 'Pod';
             pod.apiVersion = body.apiVersion;
-            return Pod.buildFromV1PodJSON(pod)
+            return Pod.buildFromJSON(pod)
         });
         return pods;
     } catch (error) {
@@ -47,7 +47,7 @@ export const getNamespacedPods = async (client: ApiRoot, options: IGetNamesacedP
             namespaces(options.namespace).
             pods.
             get({ qs: { labelSelector: stringifyLabels(options?.labels) } });
-        const pods: Pod[] = body.items.map((pod: V1Pod) => Pod.buildFromV1PodJSON(pod));
+        const pods: Pod[] = body.items.map((pod: V1Pod) => Pod.buildFromJSON(pod));
         return pods;
     } catch (error) {
         throw error;
@@ -62,7 +62,7 @@ export interface IGetNamesacedPodFromName {
 export const getNamespacedPod = async (client: ApiRoot, options: IGetNamesacedPodFromName): Promise<Pod> => {
     try {
         const { body } = await client.api.v1.namespaces(options.namespace).pods(options.name).get();
-        const pod: Pod = Pod.buildFromV1PodJSON(body);
+        const pod: Pod = Pod.buildFromJSON(body);
         return pod;
     } catch (error) {
         throw error

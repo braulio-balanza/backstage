@@ -18,10 +18,10 @@ import { decodePodSpec, decodePodStatus, decodePod } from './typeGuards'
 import { Pod } from './models'
 import { loadFixture } from '../utils/testUtils'
 
-const { body: POD_RAW }: { body: V1Pod } = loadFixture('Pods', 'podResponseFixture.json');
+const { body: POD }: { body: V1Pod } = loadFixture('Pods', 'podResponse.json');
 
 describe('tests typeguards', () => {
-    const testPod: Pod = Pod.buildFromV1PodJSON(POD_RAW)
+    const testPod: Pod = Pod.buildFromJSON(POD)
     const status: unknown = testPod.getStatus();
     const spec: unknown = testPod.getSpec();
     describe('tests the V1PodSpec type guard', () => {

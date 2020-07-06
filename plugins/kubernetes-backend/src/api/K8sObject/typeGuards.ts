@@ -30,4 +30,4 @@ export const V1ObjectMetaGuard = new Type<
         decodeObject(input, V1ObjectMeta, context, "Error decoding V1ObjectMeta"),
     (meta: V1ObjectMeta): string => JSON.stringify(meta),
 )
-export const decodeMetadata = (input: unknown): V1ObjectMeta | undefined => decodeResultHandler(input, V1ObjectMetaGuard)
+export const decodeMetadata = (input: unknown): V1ObjectMeta | undefined => <V1ObjectMeta>decodeResultHandler(input, V1ObjectMetaGuard)

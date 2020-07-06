@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// import { loadFixture } from '../utils/testUtils'
-
-// const { body } =
+import { loadFixture } from '../utils/testUtils'
+import { V1Deployment } from '@kubernetes/client-node'
+import { DeploymentGuard } from './typeGuards'
+import { Deployment } from './models'
+const { body: DEPLOYMENT }: { body: V1Deployment } = loadFixture('Deployments', 'deploymentResponse.json')
+const { body: { items: DEPLOYMENT_LIST } }: { body: { items: Array<V1Deployment> } } = loadFixture('Deployments', 'deploymentListResponse.json')
 
 describe('tests Deployment model', () => {
-    describe('tests typeguards for deployment', () => {
-        it('dummy', () => expect(true).toBeTruthy())
+    describe('tests methods for deployment model', () => {
+        describe('tests build methods', () => {
+            it('builds deployment from JSON', () => {
+                expect(DeploymentGuard.is(Deployment.buildFromJSON(DEPLOYMENT))).toEqual(true)
+            })
+            it('builds deployment array from JSON list', () => {
+                const deployments: Array<Deployment> = Deployment.buildFromJSONArray(DEPLOYMENT_LIST)
+                deployments.forEach(deployment => expect(DeploymentGuard.is(deployment)).toEqual(true));
+            })
+        })
     })
 })

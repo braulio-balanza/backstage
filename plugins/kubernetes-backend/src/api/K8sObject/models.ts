@@ -25,8 +25,6 @@ export type K8sStatus = k8s.V1PodStatus | k8s.V1NodeStatus | k8s.V1DeploymentSta
 
 export type meta = k8s.V1ObjectMeta | k8s.V1ListMeta;
 
-
-
 export interface IK8sObject {
     metadata?: k8s.V1ObjectMeta;
     spec?: K8sSpec;
@@ -46,6 +44,12 @@ export class K8sObject implements IK8sObject {
     public getLabels(): Labels | undefined {
         return this.metadata?.labels;
     };
+
+    public getName(): string | undefined {
+        return this.metadata?.name;
+    }
+
+
     public getCreatedAt(): Date | undefined {
         const timestamp = this.metadata?.creationTimestamp
         return timestamp ? new Date(timestamp) : undefined

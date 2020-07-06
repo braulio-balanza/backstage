@@ -18,7 +18,8 @@ import { Labels } from '../K8sObject/models';
 import { Errors, success, failure, Context } from 'io-ts';
 import { Either, fold } from 'fp-ts/lib/Either';
 import { pipe } from 'fp-ts/lib/pipeable';
-
+import { union } from 'lodash'
+import equal from 'fast-deep-equal'
 // import { Type } from 'io-ts';
 
 export const isConfigEmpty = (kc: KubeConfig) =>
@@ -63,22 +64,34 @@ export const getKeysFromK8sObject = (input: IKubeObject): Array<string> => {
     return getKeysFromTypeMap(input.getAttributeTypeMap());
 }
 
-// Runtime O(i*k)
-export const isKubeObject = (input: unknown, kubeObject: IKubeObject) => {
+// Runtime need to analyze lodash union
+export const isKubeObject = (input: unknown, kubeObject: IKubeObject): boolean => {
     if (!(input instanceof Object) || !kubeObject.getAttributeTypeMap)
         return false;
     const V1ObjectMetaKeys = getKeysFromTypeMap(kubeObject.getAttributeTypeMap());
     const inputKeys = Object.keys(input);
-    return inputKeys.length ? inputKeys.every(key => V1ObjectMetaKeys.includes(key)) : false
+    const merged = union(V1ObjectMetaKeys, inputKeys)
+    return inputKeys.length ? equal(V1ObjectMetaKeys, merged) : false
 }
 
-// Runtime O(i*c)
-export const isPluginObject = (input: unknown, comparison: unknown) => {
+// Runtime need to analyze lodash union
+export const isPluginObject = (input: unknown, comparison: unknown): boolean => {
+    const comparisonInstance: any = new (<any>comparison)
+    if (!(input instanceof Object) || !(comparisonInstance instanceof Object))
+        return false
+    const inputKeys = Object.keys(input);
+    const comparisonKeys = Object.keys(comparisonInstance)
+    const merged = union(comparisonKeys, inputKeys)
+    return inputKeys.length ? equal(comparisonKeys, merged) : false;
+}
+
+export const compareObject = (input: unknown, comparison: unknown): boolean => {
     if (!(input instanceof Object) || !(comparison instanceof Object))
         return false;
-    const inputKeys = Object.keys(input);
-    const comparisonKeys = Object.keys(comparison)
-    return inputKeys.every(key => comparisonKeys.includes(key))
+    if (comparison.hasOwnProperty('getAttributeTypeMap'))
+        return isKubeObject(input, comparison as IKubeObject);
+    return isPluginObject(input, comparison);
+
 }
 
 // Mehtod used by typeguard.
@@ -87,12 +100,9 @@ export const decodeObject = <T>(
     objectToCompare: any,
     context: Context,
     errorMessage?: string): Either<Errors, T> => {
-    const Template: any = objectToCompare
-    if (isKubeObject(input, objectToCompare)) {
-        return success(Object.assign(new Template, input))
-    }
-    if (isPluginObject(input, new Template)) {
-        return success(Object.assign(new Template, input))
+    const Instance: any = objectToCompare;
+    if (compareObject(input, objectToCompare)) {
+        return success(Object.assign(new Instance, input))
     }
     return failure(input, context, errorMessage)
 }

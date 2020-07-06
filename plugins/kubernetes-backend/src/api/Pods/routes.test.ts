@@ -23,14 +23,15 @@ import request from 'supertest';
 import { Client1_13 } from 'kubernetes-client';
 import { bindRoutes } from "./routes";
 import { loadFixture } from '../utils/testUtils'
+import { PodGuard } from './typeGuards'
 import { Pod } from "./models";
 
 jest.mock('./methods');
 jest.mock('kubernetes-client')
 const methods = require.requireMock('./methods');
 const dummyClient = new Client1_13({});
-const { body: { items: POD_LIST_FIXTURE } } = loadFixture('Pods', 'podListResponseFixture.json');
-const { body: POD_FIXTURE } = loadFixture('Pods', 'podResponseFixture.json');
+const { body: { items: POD_LIST_FIXTURE } } = loadFixture('Pods', 'podListResponse.json');
+const { body: POD } = loadFixture('Pods', 'podResponse.json');
 
 describe('pod routes', () => {
     let app: Application;
@@ -51,7 +52,7 @@ describe('pod routes', () => {
         describe("GET /v1/getAllNamespacedPods", () => {
             beforeEach(() => {
                 methods.getAllNamespacedPods.mockResolvedValueOnce(
-                    Pod.buildFromV1PodJSONArray(POD_LIST_FIXTURE)
+                    Pod.buildFromJSONArray(POD_LIST_FIXTURE)
                 )
             });
             afterEach(() => {
@@ -66,9 +67,9 @@ describe('pod routes', () => {
                     .then(res => {
                         expect(methods.getAllNamespacedPods).toHaveBeenCalledWith(dummyClient);
                         expect(res.body).toBeInstanceOf(Array);
-                        expect(res.body.length).toBe(10);
+                        expect(res.body.length).toEqual(10);
                         res.body.forEach((element: any) => {
-                            expect(element).toBeInstanceOf(Object);
+                            expect(PodGuard.is(element)).toEqual(true);
                         });
                     })
             });
@@ -76,7 +77,7 @@ describe('pod routes', () => {
         describe('GET /v1/getNamespacedPods', () => {
             beforeEach(() => {
                 methods.getNamespacedPods.mockResolvedValueOnce(
-                    Pod.buildFromV1PodJSONArray(POD_LIST_FIXTURE)
+                    Pod.buildFromJSONArray(POD_LIST_FIXTURE)
                 );
             });
             afterEach(() => {
@@ -92,9 +93,9 @@ describe('pod routes', () => {
                     .then(res => {
                         expect(methods.getNamespacedPods).toHaveBeenCalledWith(dummyClient, { namespace: 'default' })
                         expect(res.body).toBeInstanceOf(Array);
-                        expect(res.body.length).toBe(10);
+                        expect(res.body.length).toEqual(10);
                         res.body.forEach((element: any) => {
-                            expect(element).toBeInstanceOf(Object);
+                            expect(PodGuard.is(element)).toEqual(true);
                         });
 
                     });
@@ -103,7 +104,7 @@ describe('pod routes', () => {
         describe('GET /v1/getNamespacedPodFromName', () => {
             beforeEach(() => {
                 methods.getNamespacedPod.mockResolvedValueOnce(
-                    Pod.buildFromV1PodJSON(POD_FIXTURE)
+                    Pod.buildFromJSON(POD)
                 );
             });
             afterEach(() => {
@@ -121,8 +122,9 @@ describe('pod routes', () => {
                             name: 'hello-node-57c6f5dbf6-v2txn',
                             namespace: 'default'
                         })
-                        expect(res.body).toBeInstanceOf(Object);
-                        expect(res.body.name).toBe("hello-node-57c6f5dbf6-v2txn")
+                        expect(PodGuard.is(res.body)).toEqual(true);
+                        expect(res.body.metadata?.name).toEqual("hello-node-57c6f5dbf6-v2txn")
+                        expect(res.body.kind).toEqual('Pod')
                     });
             });
         });

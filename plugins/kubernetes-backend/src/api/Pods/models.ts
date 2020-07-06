@@ -16,6 +16,7 @@
 
 import { V1Pod, V1PodSpec, V1PodStatus, V1ContainerStatus, V1ObjectMeta, V1Container } from "@kubernetes/client-node";
 import { IK8sObject, K8sObject } from "../K8sObject/models";
+import { decodeMetadata } from '../K8sObject/typeGuards'
 import { decodePodSpec, decodePodStatus } from './typeGuards'
 
 
@@ -30,7 +31,6 @@ export interface PodOverview {
 }
 
 export interface IPod extends IK8sObject {
-    name?: string;
     kind?: string;
     apiVersion?: string;
     metadata?: V1ObjectMeta
@@ -43,7 +43,6 @@ export class Pod extends K8sObject {
 
     static build = (params: IPod): Pod => {
         return new Pod(
-            params.name,
             params.kind,
             params.apiVersion,
             params.status,
@@ -52,25 +51,21 @@ export class Pod extends K8sObject {
         );
     }
 
-    static buildFromV1PodJSON = (v1Pod: V1Pod): Pod => {
+    static buildFromJSON = (v1Pod: V1Pod): Pod => {
         const { kind, apiVersion, metadata, spec, status } = v1Pod;
-        const name: string = metadata?.name ? metadata.name : "";
-        return Pod.build({ name, kind, apiVersion, metadata, spec, status });
+        return Pod.build({ kind, apiVersion, metadata, spec, status });
     }
 
-    static buildFromV1PodJSONArray = (v1PodList: V1Pod[]): Pod[] => {
-        const pods: Pod[] = new Array<Pod>();
-        v1PodList.map((pod: V1Pod) => pods.push(Pod.buildFromV1PodJSON(pod)));
-        return pods;
-    }
+    static buildFromJSONArray = (v1PodList: Array<V1Pod>): Array<Pod> =>
+        v1PodList.map((pod: V1Pod) => Pod.buildFromJSON(pod));
 
     public buildV1PodJSON = (): V1Pod => {
         return {
             kind: this.kind,
             apiVersion: this.apiVersion,
-            metadata: this.metadata as V1ObjectMeta,
-            spec: this.spec as V1PodSpec,
-            status: this.status as V1PodStatus,
+            metadata: this.getMetadata(),
+            spec: this.getSpec(),
+            status: this.getStatus(),
         };
     }
 
@@ -126,6 +121,7 @@ export class Pod extends K8sObject {
         const spec = this.getSpec();
         return spec?.nodeName ? spec.nodeName : '';
     }
+
     public getPodOverview = (): PodOverview => {
         const overview: PodOverview = {
             name: this.getMetadata()?.name,
@@ -140,14 +136,13 @@ export class Pod extends K8sObject {
     }
 
     constructor(
-        public name?: string,
         public kind?: string,
         public apiVersion?: string,
         status?: V1PodStatus,
         metadata?: V1ObjectMeta,
         spec?: V1PodSpec,
     ) {
-        super(metadata, decodePodSpec(spec), decodePodStatus(status))
+        super(decodeMetadata(metadata), decodePodSpec(spec), decodePodStatus(status))
     };
 
 }
